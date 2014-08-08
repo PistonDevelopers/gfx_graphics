@@ -1,4 +1,4 @@
 gfx_graphics
 ============
 
-A gfx-rs back-end for Rust-Graphics
+The implementation of a Rust-Graphics back-end using gfx-rs
