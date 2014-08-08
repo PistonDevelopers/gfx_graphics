@@ -14,6 +14,10 @@ path = "src/lib.rs"
 
 git = "https://github.com/gfx-rs/gfx-rs"
 
+[dependencies.gfx_macros]
+
+git = "https://github.com/gfx-rs/gfx-rs"
+
 [dependencies.graphics]
 
 git = "https://github.com/pistondevelopers/rust-graphics"
