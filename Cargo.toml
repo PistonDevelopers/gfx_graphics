@@ -1,0 +1,12 @@
+[package]
+
+name = "gfx_graphics"
+version = "0.0.0"
+authors = ["bvssvni <bvssvni@gmail.com>"]
+tags = []
+
+[[lib]]
+
+name = "gfx_graphics"
+path = "src/lib.rs"
+
