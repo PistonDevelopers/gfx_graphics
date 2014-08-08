@@ -10,3 +10,14 @@ tags = []
 name = "gfx_graphics"
 path = "src/lib.rs"
 
+[dependencies.gfx]
+
+git = "https://github.com/gfx-rs/gfx-rs"
+
+[dependencies.graphics]
+
+git = "https://github.com/pistondevelopers/rust-graphics"
+
+[dependencies.image]
+
+git = "https://github.com/pistondevelopers/rust-image"
