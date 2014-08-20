@@ -6,8 +6,9 @@
 
 #[phase(plugin)]
 extern crate gfx_macros;
-extern crate graphics;
+extern crate device;
 extern crate gfx;
+extern crate graphics;
 extern crate image;
 
 pub use gfx2d::Gfx2d;
