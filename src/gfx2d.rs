@@ -112,7 +112,7 @@ struct Vertex {
 }
 
 impl Vertex {
-    fn new(pos: [f32, ..2], color: [f32, ..4], uv: [f32, ..2]) -> Vertex {
+    fn new(pos: [f32, ..2], color: [f32, ..4]) -> Vertex {
         Vertex {
             pos: pos,
             color: color,
@@ -144,12 +144,13 @@ struct ParamsUV {
 
 /// The graphics back-end.
 pub struct Gfx2d {
+    /// Contains the draw calls to be submitted to device.
+    pub renderer: gfx::Renderer,
     state: gfx::DrawState,
     program: gfx::shade::EmptyProgram,
     program_uv: ProgramUV,
     vertex_data: Vec<Vertex>,
     vertex_data_uv: Vec<VertexUV>,
-    renderer: gfx::Renderer,
 }
 
 impl Gfx2d {
@@ -173,5 +174,27 @@ impl Gfx2d {
 }
 
 impl BackEnd<Texture> for Gfx2d {
+    fn supports_tri_list_xy_f32_rgba_f32(&self) -> bool { true }
 
+    fn tri_list_xy_f32_rgba_f32(
+        &mut self,
+        vertices: &[f32],
+        colors: &[f32]
+    ) {
+        self.vertex_data.clear();
+        let n = vertices.len() / 2;
+        for i in range(0, n) {
+            self.vertex_data.push(
+                Vertex::new(
+                    [vertices[2 * i], vertices[2 * i + 1]],
+                    [
+                        colors[4 * i],
+                        colors[4 * i + 1],
+                        colors[4 * i + 2],
+                        colors[4 * i + 3]
+                    ]
+                )
+            );
+        }
+    }
 }
