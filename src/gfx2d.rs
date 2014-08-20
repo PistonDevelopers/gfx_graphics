@@ -1,12 +1,13 @@
 
 use gfx;
+use gfx::DeviceHelper;
 use graphics::{
     BackEnd,
 };
 
 use Texture;
 
-static VERTEX_SHADER_TRI_LIST_XY_RGBA: gfx::ShaderSource = shaders!{
+static VERTEX_SHADER: gfx::ShaderSource = shaders!{
     GLSL_120: b"
 #version 120
 attribute vec2 pos;
@@ -29,7 +30,7 @@ void main() {
 "
 };
 
-static FRAGMENT_SHADER_TRI_LIST_XY_RGBA: gfx::ShaderSource = shaders!{
+static FRAGMENT_SHADER: gfx::ShaderSource = shaders!{
     GLSL_120: b"
 #version 120
 varying vec4 v_Color;
@@ -47,7 +48,7 @@ void main() {
 "
 };
 
-static VERTEX_SHADER_TRI_LIST_XY_RGBA_UV: gfx::ShaderSource = shaders!{
+static VERTEX_SHADER_UV: gfx::ShaderSource = shaders!{
     GLSL_120: b"
 #version 120
 attribute vec2 pos;
@@ -78,7 +79,7 @@ void main() {
 "
 };
 
-static FRAGMENT_SHADER_TRI_LIST_XY_RGBA_UV: gfx::ShaderSource = shaders!{
+static FRAGMENT_SHADER_UV: gfx::ShaderSource = shaders!{
     GLSL_120: b"
 #version 120
 uniform sampler2D s_texture;
@@ -137,13 +138,23 @@ impl VertexUV {
 /// The graphics back-end.
 pub struct Gfx2d {
     state: gfx::DrawState,
+    program: gfx::shade::EmptyProgram,
+    program_uv: gfx::shade::EmptyProgram,
 }
 
 impl Gfx2d {
     /// Creates a new Gfx2d object.
-    pub fn new() -> Gfx2d {
+    pub fn new<D: gfx::Device>(device: &mut D) -> Gfx2d {
         Gfx2d {
             state: gfx::DrawState::new(),
+            program: device.link_program(
+                    VERTEX_SHADER.clone(),
+                    FRAGMENT_SHADER.clone()
+                ).unwrap(),
+            program_uv: device.link_program(
+                    VERTEX_SHADER_UV.clone(),
+                    FRAGMENT_SHADER_UV.clone()
+                ).unwrap()
         }
     }
 }
