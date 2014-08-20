@@ -137,11 +137,16 @@ impl VertexUV {
     }
 }
 
+#[shader_param(ProgramUV)]
+struct ParamsUV {
+    s_texture: gfx::shade::TextureParam,
+}
+
 /// The graphics back-end.
 pub struct Gfx2d {
     state: gfx::DrawState,
     program: gfx::shade::EmptyProgram,
-    program_uv: gfx::shade::EmptyProgram,
+    program_uv: ProgramUV,
     vertex_data: Vec<Vertex>,
     vertex_data_uv: Vec<VertexUV>,
 }
