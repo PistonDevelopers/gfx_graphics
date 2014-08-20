@@ -151,6 +151,8 @@ pub struct Gfx2d {
     program_uv: ProgramUV,
     vertex_data: Vec<Vertex>,
     vertex_data_uv: Vec<VertexUV>,
+    buffer: gfx::BufferHandle<Vertex>,
+    buffer_uv: gfx::BufferHandle<VertexUV>,
 }
 
 impl Gfx2d {
@@ -169,6 +171,8 @@ impl Gfx2d {
             vertex_data: Vec::with_capacity(BUFFER_SIZE),
             vertex_data_uv: Vec::with_capacity(BUFFER_SIZE),
             renderer: device.create_renderer(),
+            buffer: device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic),
+            buffer_uv: device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic),
         }
     }
 
