@@ -149,6 +149,7 @@ pub struct Gfx2d {
     program_uv: ProgramUV,
     vertex_data: Vec<Vertex>,
     vertex_data_uv: Vec<VertexUV>,
+    renderer: gfx::Renderer,
 }
 
 impl Gfx2d {
@@ -165,7 +166,8 @@ impl Gfx2d {
                     FRAGMENT_SHADER_UV.clone()
                 ).unwrap(),
             vertex_data: Vec::with_capacity(BUFFER_SIZE),
-            vertex_data_uv: Vec::with_capacity(BUFFER_SIZE)
+            vertex_data_uv: Vec::with_capacity(BUFFER_SIZE),
+            renderer: device.create_renderer(),
         }
     }
 }
