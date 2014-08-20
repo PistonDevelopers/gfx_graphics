@@ -135,12 +135,16 @@ impl VertexUV {
 }
 
 /// The graphics back-end.
-pub struct Gfx2d;
+pub struct Gfx2d {
+    state: gfx::DrawState,
+}
 
 impl Gfx2d {
     /// Creates a new Gfx2d object.
     pub fn new() -> Gfx2d {
-        Gfx2d
+        Gfx2d {
+            state: gfx::DrawState::new(),
+        }
     }
 }
 
