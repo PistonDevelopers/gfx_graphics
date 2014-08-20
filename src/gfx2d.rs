@@ -106,12 +106,27 @@ void main()
 struct Vertex {
     pos: [f32, ..2],
     color: [f32, ..4],
-    uv: [f32, ..2],
 }
 
 impl Vertex {
     fn new(pos: [f32, ..2], color: [f32, ..4], uv: [f32, ..2]) -> Vertex {
         Vertex {
+            pos: pos,
+            color: color,
+        }
+    }
+}
+
+#[vertex_format]
+struct VertexUV {
+    pos: [f32, ..2],
+    color: [f32, ..4],
+    uv: [f32, ..2],
+}
+
+impl VertexUV {
+    fn new(pos: [f32, ..2], color: [f32, ..4], uv: [f32, ..2]) -> VertexUV {
+        VertexUV {
             pos: pos,
             color: color,
             uv: uv,
