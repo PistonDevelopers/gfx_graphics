@@ -1,4 +1,5 @@
 
+use device;
 use gfx;
 use gfx::DeviceHelper;
 use graphics::{
@@ -144,8 +145,7 @@ struct ParamsUV {
 
 /// The graphics back-end.
 pub struct Gfx2d {
-    /// Contains the draw calls to be submitted to device.
-    pub renderer: gfx::Renderer,
+    renderer: gfx::Renderer,
     state: gfx::DrawState,
     program: gfx::shade::EmptyProgram,
     program_uv: ProgramUV,
@@ -170,6 +170,11 @@ impl Gfx2d {
             vertex_data_uv: Vec::with_capacity(BUFFER_SIZE),
             renderer: device.create_renderer(),
         }
+    }
+
+    /// Returns the command buffer to be submitted to device.
+    pub fn as_buffer(&self) -> &device::GlCommandBuffer {
+        self.renderer.as_buffer()
     }
 }
 
@@ -196,5 +201,6 @@ impl BackEnd<Texture> for Gfx2d {
                 )
             );
         }
+
     }
 }
