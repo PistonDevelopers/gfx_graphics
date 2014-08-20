@@ -7,6 +7,8 @@ use graphics::{
 
 use Texture;
 
+static BUFFER_SIZE: uint = 1024;
+
 static VERTEX_SHADER: gfx::ShaderSource = shaders!{
     GLSL_120: b"
 #version 120
@@ -140,6 +142,8 @@ pub struct Gfx2d {
     state: gfx::DrawState,
     program: gfx::shade::EmptyProgram,
     program_uv: gfx::shade::EmptyProgram,
+    vertex_data: Vec<Vertex>,
+    vertex_data_uv: Vec<VertexUV>,
 }
 
 impl Gfx2d {
@@ -154,7 +158,9 @@ impl Gfx2d {
             program_uv: device.link_program(
                     VERTEX_SHADER_UV.clone(),
                     FRAGMENT_SHADER_UV.clone()
-                ).unwrap()
+                ).unwrap(),
+            vertex_data: Vec::with_capacity(BUFFER_SIZE),
+            vertex_data_uv: Vec::with_capacity(BUFFER_SIZE)
         }
     }
 }
