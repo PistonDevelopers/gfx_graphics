@@ -11,3 +11,5 @@ before_script:
 script:
     - cargo build -v
     - cargo test -v
+    - cd examples/image_iter/
+    - cargo build -v
