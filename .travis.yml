@@ -4,12 +4,18 @@ os:
     - osx
 env:
     global:
-        - LD_LIBRARY_PATH: /usr/local/lib
+        - secure: TySUUmQTac573GGoah6pdfz5ZvfxWh9mLThTpubONEUHyeNR1DPZkQ1NfvslAkGKU3iSRYZ2HOKyaeDxh8s8GiyT+gty93z0cvBCeXZlgSqIUOJO77yurnr16dwluh4ySgBMhLU8EPJAc3MG02W3YjKsDcQr1NmeM3Mb4fQf6Ng=
 before_script:
     - rustc -v
     - cargo -V
 script:
     - cargo build -v
     - cargo test -v
+    - cargo doc -v
     - cd examples/image_iter/
     - cargo build -v
+    - cargo doc -v
+after_success:
+    - cp -R target/doc doc
+    - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
+    - rm -r doc
