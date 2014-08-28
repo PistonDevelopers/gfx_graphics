@@ -190,10 +190,16 @@ impl BackEnd<Texture> for Gfx2d {
         vertices: &[f32],
         colors: &[f32]
     ) {
-        self.vertex_data.clear();
+        let &Gfx2d {
+            ref mut vertex_data,
+            ref mut renderer,
+            ref mut buffer,
+            ..
+        } = self;
+        vertex_data.clear();
         let n = vertices.len() / 2;
         for i in range(0, n) {
-            self.vertex_data.push(
+            vertex_data.push(
                 Vertex::new(
                     [vertices[2 * i], vertices[2 * i + 1]],
                     [
@@ -205,6 +211,6 @@ impl BackEnd<Texture> for Gfx2d {
                 )
             );
         }
-
+        renderer.update_buffer_vec(*buffer, vertex_data.clone(), 0);
     }
 }
