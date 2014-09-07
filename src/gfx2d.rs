@@ -221,6 +221,25 @@ for RenderContext<'a, C> {
             );
     }
 
+    fn enable_alpha_blend(&mut self) {
+        use std::default::Default;
+        use gfx::state::{Normal, Inverse, Factor};
+
+        self.gfx2d.batch.state.blend = Some(gfx::state::Blend {
+                value: [1.0, 1.0, 1.0, 1.0],
+                color: gfx::state::BlendChannel {
+                        equation: gfx::state::FuncAdd,
+                        source: Factor(Normal, gfx::state::SourceAlpha),
+                        destination: Factor(Inverse, gfx::state::SourceAlpha)
+                    },
+                alpha: Default::default()
+            })
+    }
+
+    fn disable_alpha_blend(&mut self) {
+        self.gfx2d.batch.state.blend = None;
+    }
+
     fn supports_tri_list_xy_f32_rgba_f32(&self) -> bool { true }
 
     fn tri_list_xy_f32_rgba_f32(
