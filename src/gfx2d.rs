@@ -180,15 +180,18 @@ impl<C: gfx::CommandBuffer> Gfx2d<C> {
 /// Used for rendering 2D graphics.
 pub struct RenderContext<'a, C: 'a + gfx::CommandBuffer> {
     renderer: &'a mut gfx::Renderer<C>,
-    gfx2d: &'a mut Gfx2d<C>
+    frame: &'a gfx::Frame,
+    gfx2d: &'a mut Gfx2d<C>,
 }
 
 impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(renderer: &'a mut gfx::Renderer<C>,
+               frame: &'a gfx::Frame,
                gfx2d: &'a mut Gfx2d<C>) -> RenderContext<'a, C> {
         RenderContext {
             renderer: renderer,
+            frame: frame,
             gfx2d: gfx2d
         }
     }
@@ -196,6 +199,25 @@ impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
 
 impl<'a, C: gfx::CommandBuffer> BackEnd<Texture>
 for RenderContext<'a, C> {
+    fn supports_clear_rgba(&self) -> bool { true }
+
+    fn clear_rgba(&mut self, r: f32, g: f32, b: f32, a: f32) {
+        let &RenderContext {
+            ref mut renderer,
+            frame,
+            ..
+        } = self;
+        renderer.clear(
+                gfx::ClearData {
+                    color: [r, g, b, a],
+                    depth: 0.0,
+                    stencil: 0,
+                },
+                gfx::Color,
+                frame
+            );
+    }
+
     fn supports_tri_list_xy_f32_rgba_f32(&self) -> bool { true }
 
     fn tri_list_xy_f32_rgba_f32(
@@ -205,6 +227,7 @@ for RenderContext<'a, C> {
     ) {
         let &RenderContext {
             ref mut renderer,
+            ref frame,
             gfx2d: &Gfx2d {
                 ref mut buffer,
                 ..
