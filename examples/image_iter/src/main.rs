@@ -42,7 +42,7 @@ fn main() {
     let asset_store = AssetStore::from_folder("../bin/assets");
 
     let image = asset_store.path("rust-logo.png").unwrap();
-    let image = Texture::from_path(&image).unwrap();
+    let image = Texture::from_path(&mut device, &image).unwrap();
     let event_settings = EventSettings {
             updates_per_second: 120,
             max_frames_per_second: 60,
@@ -55,9 +55,9 @@ fn main() {
                     let ref mut g = RenderContext::new(&mut renderer, &frame, &mut gfx2d);
                     let c = Context::abs(args.width as f64, args.height as f64);
                     c.rgb(1.0, 1.0, 1.0).draw(g);
-                    // c.image(&image).draw(g);
                     c.rect(0.0, 0.0, 100.0, 100.0).rgb(1.0, 0.0, 0.0).draw(g);
                     c.rect(50.0, 50.0, 100.0, 100.0).rgba(0.0, 1.0, 0.0, 0.3).draw(g);
+                    c.trans(100.0, 100.0).image(&image).draw(g);
                 }
 
                 device.submit(renderer.as_buffer());

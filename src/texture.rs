@@ -1,3 +1,4 @@
+use gfx;
 use image;
 use image::GenericImage;
 use graphics::{
@@ -6,13 +7,16 @@ use graphics::{
 
 /// Represents a texture.
 pub struct Texture {
-    width: u32,
-    height: u32
+    /// A handle to the Gfx texture.
+    pub handle: gfx::TextureHandle,
 }
 
 impl Texture {
     /// Creates a texture from path.
-    pub fn from_path(path: &Path) -> Result<Texture, String> {
+    pub fn from_path<
+        C: gfx::CommandBuffer,
+        D: gfx::Device<C>
+    >(device: &mut D, path: &Path) -> Result<Texture, String> {
         let img = match image::open(path) {
             Ok(img) => img,
             Err(e)  => return Err(format!("Could not load '{}': {}",
@@ -25,16 +29,29 @@ impl Texture {
         };
 
         let (width, height) = img.dimensions();
+        let texture_info = gfx::tex::TextureInfo {
+            width: width as u16,
+            height: height as u16,
+            depth: 1,
+            levels: 1,
+            kind: gfx::tex::Texture2D,
+            format: gfx::tex::RGBA8,
+        };
+        let image_info = texture_info.to_image_info();
+        let texture = device.create_texture(texture_info).unwrap();
+        device.update_texture(&texture, &image_info,
+            &img.raw_pixels().as_slice())
+        .unwrap();
 
         Ok(Texture {
-            width: width,
-            height: height
+            handle: texture
         })
     }
 }
 
 impl ImageSize for Texture {
     fn get_size(&self) -> (u32, u32) {
-        (self.width, self.height)
+        let info = self.handle.get_info();
+        (info.width as u32, info.height as u32)
     }
 }
