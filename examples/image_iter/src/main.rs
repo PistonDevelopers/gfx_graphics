@@ -53,10 +53,15 @@ fn main() {
             Render(args) => {
                 // gl.viewport(0, 0, args.width as i32, args.height as i32);
 
-                let ref mut g = RenderContext::new(&mut renderer, &mut gfx2d);
-                let c = Context::abs(args.width as f64, args.height as f64);
-                c.rgb(1.0, 1.0, 1.0).draw(g);
-                c.image(&image).draw(g);
+                {
+                    let ref mut g = RenderContext::new(&mut renderer, &mut gfx2d);
+                    let c = Context::abs(args.width as f64, args.height as f64);
+                    c.rgb(1.0, 1.0, 1.0).draw(g);
+                    // c.image(&image).draw(g);
+                    c.rect(0.0, 0.0, 100.0, 100.0).rgb(1.0, 0.0, 0.0).draw(g);
+                }
+
+                device.submit(renderer.as_buffer());
             },
             _ => {},
         }
