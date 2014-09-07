@@ -138,26 +138,27 @@ impl VertexUV {
     }
 }
 
-#[shader_param(ProgramUV)]
+#[shader_param(BatchUV, OwnedBatchUV)]
 struct ParamsUV {
     s_texture: gfx::shade::TextureParam,
 }
 
 /// The graphics back-end.
-pub struct Gfx2d {
-    renderer: gfx::Renderer,
+pub struct Gfx2d<C: gfx::CommandBuffer> {
     state: gfx::DrawState,
-    program: gfx::shade::EmptyProgram,
-    program_uv: ProgramUV,
-    vertex_data: Vec<Vertex>,
-    vertex_data_uv: Vec<VertexUV>,
+    program: device::Handle<u32,device::shade::ProgramInfo>,
+    program_uv: device::Handle<u32,device::shade::ProgramInfo>,
     buffer: gfx::BufferHandle<Vertex>,
     buffer_uv: gfx::BufferHandle<VertexUV>,
+    mesh: gfx::Mesh,
+    mesh_uv: gfx::Mesh,
 }
 
-impl Gfx2d {
+impl<C: gfx::CommandBuffer> Gfx2d<C> {
     /// Creates a new Gfx2d object.
-    pub fn new<D: gfx::Device>(device: &mut D) -> Gfx2d {
+    pub fn new<D: gfx::Device<C>>(device: &mut D) -> Gfx2d<C> {
+        let buffer = device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic);
+        let buffer_uv = device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic);
         Gfx2d {
             state: gfx::DrawState::new(),
             program: device.link_program(
@@ -168,21 +169,16 @@ impl Gfx2d {
                     VERTEX_SHADER_UV.clone(),
                     FRAGMENT_SHADER_UV.clone()
                 ).unwrap(),
-            vertex_data: Vec::with_capacity(BUFFER_SIZE),
-            vertex_data_uv: Vec::with_capacity(BUFFER_SIZE),
-            renderer: device.create_renderer(),
-            buffer: device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic),
-            buffer_uv: device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic),
+            buffer: buffer,
+            buffer_uv: buffer_uv,
+            mesh: gfx::Mesh::from_format(buffer, BUFFER_SIZE as u32),
+            mesh_uv: gfx::Mesh::from_format(buffer, BUFFER_SIZE as u32),
         }
-    }
-
-    /// Returns the command buffer to be submitted to device.
-    pub fn as_buffer(&self) -> &device::GlCommandBuffer {
-        self.renderer.as_buffer()
     }
 }
 
-impl BackEnd<Texture> for Gfx2d {
+impl<'a, C: gfx::CommandBuffer> BackEnd<Texture>
+for (gfx::Renderer<C>, Gfx2d<C>) {
     fn supports_tri_list_xy_f32_rgba_f32(&self) -> bool { true }
 
     fn tri_list_xy_f32_rgba_f32(
@@ -190,13 +186,11 @@ impl BackEnd<Texture> for Gfx2d {
         vertices: &[f32],
         colors: &[f32]
     ) {
-        let &Gfx2d {
-            ref mut vertex_data,
-            ref mut renderer,
+        let &(ref mut renderer, Gfx2d {
             ref mut buffer,
             ..
-        } = self;
-        vertex_data.clear();
+        }) = self;
+        let mut vertex_data = Vec::new();
         let n = vertices.len() / 2;
         for i in range(0, n) {
             vertex_data.push(
@@ -211,6 +205,10 @@ impl BackEnd<Texture> for Gfx2d {
                 )
             );
         }
-        renderer.update_buffer_vec(*buffer, vertex_data.clone(), 0);
+
+        /*
+        let n = vertex_data.len();
+        renderer.update_buffer_vec(*buffer, vertex_data, 0);
+        */
     }
 }
