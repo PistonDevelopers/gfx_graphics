@@ -146,33 +146,36 @@ struct ParamsUV {
 /// The graphics back-end.
 pub struct Gfx2d<C: gfx::CommandBuffer> {
     state: gfx::DrawState,
-    program: device::Handle<u32,device::shade::ProgramInfo>,
     program_uv: device::Handle<u32,device::shade::ProgramInfo>,
     buffer: gfx::BufferHandle<Vertex>,
     buffer_uv: gfx::BufferHandle<VertexUV>,
-    mesh: gfx::Mesh,
     mesh_uv: gfx::Mesh,
+    batch: gfx::batch::OwnedBatch<(), ()>,
 }
 
 impl<C: gfx::CommandBuffer> Gfx2d<C> {
     /// Creates a new Gfx2d object.
     pub fn new<D: gfx::Device<C>>(device: &mut D) -> Gfx2d<C> {
+        let program = device.link_program(
+                VERTEX_SHADER.clone(),
+                FRAGMENT_SHADER.clone()
+            ).unwrap();
+        let program_uv = device.link_program(
+                VERTEX_SHADER_UV.clone(),
+                FRAGMENT_SHADER_UV.clone()
+            ).unwrap();
         let buffer = device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic);
         let buffer_uv = device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic);
+        let mesh = gfx::Mesh::from_format(buffer, BUFFER_SIZE as u32);
+        let mesh_uv = gfx::Mesh::from_format(buffer, BUFFER_SIZE as u32);
+        let batch = gfx::batch::OwnedBatch::new(mesh, program, ()).unwrap();
         Gfx2d {
             state: gfx::DrawState::new(),
-            program: device.link_program(
-                    VERTEX_SHADER.clone(),
-                    FRAGMENT_SHADER.clone()
-                ).unwrap(),
-            program_uv: device.link_program(
-                    VERTEX_SHADER_UV.clone(),
-                    FRAGMENT_SHADER_UV.clone()
-                ).unwrap(),
+            program_uv: program_uv,
             buffer: buffer,
             buffer_uv: buffer_uv,
-            mesh: gfx::Mesh::from_format(buffer, BUFFER_SIZE as u32),
-            mesh_uv: gfx::Mesh::from_format(buffer, BUFFER_SIZE as u32),
+            mesh_uv: mesh_uv,
+            batch: batch,
         }
     }
 }
@@ -230,6 +233,7 @@ for RenderContext<'a, C> {
             ref frame,
             gfx2d: &Gfx2d {
                 ref mut buffer,
+                ref mut batch,
                 ..
             }
         } = self;
@@ -249,9 +253,9 @@ for RenderContext<'a, C> {
             );
         }
 
-        /*
         let n = vertex_data.len();
         renderer.update_buffer_vec(*buffer, vertex_data, 0);
-        */
+        batch.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
+        renderer.draw(&*batch, *frame);
     }
 }
