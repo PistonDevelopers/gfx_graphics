@@ -177,8 +177,25 @@ impl<C: gfx::CommandBuffer> Gfx2d<C> {
     }
 }
 
+/// Used for rendering 2D graphics.
+pub struct RenderContext<'a, C: 'a + gfx::CommandBuffer> {
+    renderer: &'a mut gfx::Renderer<C>,
+    gfx2d: &'a mut Gfx2d<C>
+}
+
+impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
+    /// Creates a new object for rendering 2D graphics.
+    pub fn new(renderer: &'a mut gfx::Renderer<C>,
+               gfx2d: &'a mut Gfx2d<C>) -> RenderContext<'a, C> {
+        RenderContext {
+            renderer: renderer,
+            gfx2d: gfx2d
+        }
+    }
+}
+
 impl<'a, C: gfx::CommandBuffer> BackEnd<Texture>
-for (gfx::Renderer<C>, Gfx2d<C>) {
+for RenderContext<'a, C> {
     fn supports_tri_list_xy_f32_rgba_f32(&self) -> bool { true }
 
     fn tri_list_xy_f32_rgba_f32(
@@ -186,10 +203,13 @@ for (gfx::Renderer<C>, Gfx2d<C>) {
         vertices: &[f32],
         colors: &[f32]
     ) {
-        let &(ref mut renderer, Gfx2d {
-            ref mut buffer,
-            ..
-        }) = self;
+        let &RenderContext {
+            ref mut renderer,
+            gfx2d: &Gfx2d {
+                ref mut buffer,
+                ..
+            }
+        } = self;
         let mut vertex_data = Vec::new();
         let n = vertices.len() / 2;
         for i in range(0, n) {
