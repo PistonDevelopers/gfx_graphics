@@ -14,20 +14,20 @@ static VERTEX_SHADER: gfx::ShaderSource = shaders!{
     GLSL_120: b"
 #version 120
 attribute vec2 pos;
-attribute vec3 color;
+attribute vec4 color;
 varying vec4 v_Color;
 void main() {
-    v_Color = vec4(color, 1.0);
+    v_Color = color;
     gl_Position = vec4(pos, 0.0, 1.0);
 }
 "
     GLSL_150: b"
 #version 150 core
 in vec2 pos;
-in vec3 color;
+in vec4 color;
 out vec4 v_Color;
 void main() {
-    v_Color = vec4(color, 1.0);
+    v_Color = color;
     gl_Position = vec4(pos, 0.0, 1.0);
 }
 "
@@ -55,7 +55,7 @@ static VERTEX_SHADER_UV: gfx::ShaderSource = shaders!{
     GLSL_120: b"
 #version 120
 attribute vec2 pos;
-attribute vec3 color;
+attribute vec4 color;
 attribute vec2 uv;
 uniform sampler2D s_texture;
 varying vec4 v_Color;
@@ -63,13 +63,13 @@ varying vec2 v_UV;
 void main() {
     v_UV = uv;
     v_Color = color;
-    gl_Position = a_v4Position;
+    gl_Position = vec4(pos, 0.0, 1.0);
 }
 "
     GLSL_150: b"
 #version 150 core
 in vec2 pos;
-in vec3 color;
+in vec4 color;
 in vec2 uv;
 uniform sampler2D s_texture;
 out vec4 v_Color;
@@ -77,7 +77,7 @@ out vec2 v_UV;
 void main() {
     v_UV = uv;
     v_Color = color;
-    gl_Position = a_v4Position;
+    gl_Position = vec4(pos, 0.0, 1.0);
 }
 "
 };
