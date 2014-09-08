@@ -278,8 +278,8 @@ for RenderContext<'a, C> {
                 ..
             }
         } = self;
-        let mut vertex_data = Vec::new();
         let n = vertices.len() / 2;
+        let mut vertex_data = Vec::with_capacity(n);
         for i in range(0, n) {
             vertex_data.push(
                 Vertex::new(
@@ -331,8 +331,8 @@ for RenderContext<'a, C> {
                 ..
             }
         } = self;
-        let mut vertex_data = Vec::new();
         let n = vertices.len() / 2;
+        let mut vertex_data = Vec::with_capacity(n);
         for i in range(0, n) {
             vertex_data.push(
                 VertexUV::new(
