@@ -1,13 +1,10 @@
 
 use gfx;
 use gfx::DeviceHelper;
-use graphics::{
-    BackEnd,
-};
+use graphics::BackEnd;
+use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 
 use Texture;
-
-static BUFFER_SIZE: uint = 1024;
 
 static VERTEX_SHADER: gfx::ShaderSource = shaders!{
     GLSL_120: b"
@@ -137,6 +134,7 @@ impl VertexUV {
     }
 }
 
+#[allow(unused_imports)]
 #[shader_param(BatchUV, OwnedBatchUV)]
 struct ParamsUV {
     s_texture: gfx::shade::TextureParam,
