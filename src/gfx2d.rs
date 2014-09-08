@@ -1,5 +1,4 @@
 
-use device;
 use gfx;
 use gfx::DeviceHelper;
 use graphics::{
@@ -90,7 +89,7 @@ varying vec2 v_UV;
 varying vec4 v_Color;
 void main()
 {
-    gl_FragColor = texture(s_texture, v_UV) * v_Color;
+    gl_FragColor = texture2D(s_texture, v_UV) * v_Color;
 }
 "
     GLSL_150: b"
@@ -145,12 +144,10 @@ struct ParamsUV {
 
 /// The graphics back-end.
 pub struct Gfx2d<C: gfx::CommandBuffer> {
-    state: gfx::DrawState,
-    program_uv: device::Handle<u32,device::shade::ProgramInfo>,
     buffer: gfx::BufferHandle<Vertex>,
     buffer_uv: gfx::BufferHandle<VertexUV>,
-    mesh_uv: gfx::Mesh,
     batch: gfx::batch::OwnedBatch<(), ()>,
+    batch_uv: OwnedBatchUV,
 }
 
 impl<C: gfx::CommandBuffer> Gfx2d<C> {
@@ -167,15 +164,40 @@ impl<C: gfx::CommandBuffer> Gfx2d<C> {
         let buffer = device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic);
         let buffer_uv = device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic);
         let mesh = gfx::Mesh::from_format(buffer, BUFFER_SIZE as u32);
-        let mesh_uv = gfx::Mesh::from_format(buffer, BUFFER_SIZE as u32);
+        let mesh_uv = gfx::Mesh::from_format(buffer_uv, BUFFER_SIZE as u32);
         let batch = gfx::batch::OwnedBatch::new(mesh, program, ()).unwrap();
+
+        let sampler = device.create_sampler(
+                gfx::tex::SamplerInfo::new(gfx::tex::Trilinear,
+                                           gfx::tex::Clamp)
+            );
+
+        // Create a dummy texture
+        let texture_info = gfx::tex::TextureInfo {
+            width: 1,
+            height: 1,
+            depth: 1,
+            levels: 1,
+            kind: gfx::tex::Texture2D,
+            format: gfx::tex::RGBA8,
+        };
+        let image_info = texture_info.to_image_info();
+        let texture = device.create_texture(texture_info).unwrap();
+        device.update_texture(&texture, &image_info,
+                &vec![0x20u8, 0xA0u8, 0xC0u8, 0x00u8].as_slice())
+            .unwrap();
+        let params_uv = ParamsUV {
+            s_texture: (texture, Some(sampler))
+        };
+
+        let batch_uv = gfx::batch::OwnedBatch::new(
+            mesh_uv, program_uv, params_uv).unwrap();
+
         Gfx2d {
-            state: gfx::DrawState::new(),
-            program_uv: program_uv,
             buffer: buffer,
             buffer_uv: buffer_uv,
-            mesh_uv: mesh_uv,
             batch: batch,
+            batch_uv: batch_uv,
         }
     }
 }
@@ -276,5 +298,62 @@ for RenderContext<'a, C> {
         renderer.update_buffer_vec(*buffer, vertex_data, 0);
         batch.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
         renderer.draw(&*batch, *frame);
+    }
+
+    fn supports_single_texture(&self) -> bool { true }
+
+    fn enable_single_texture(&mut self, texture: &Texture) {
+        let ParamsUV {
+            s_texture: (ref mut s_texture, _)
+        } = self.gfx2d.batch_uv.param;
+        *s_texture = texture.handle;
+    }
+
+    fn disable_single_texture(&mut self) {}
+
+    // Assume all textures has alpha channel for now.
+    fn has_texture_alpha(&self, _texture: &Texture) -> bool { true }
+
+    fn supports_tri_list_xy_f32_rgba_f32_uv_f32(&self) -> bool { true }
+
+    fn tri_list_xy_f32_rgba_f32_uv_f32(
+        &mut self,
+        vertices: &[f32],
+        colors: &[f32],
+        texture_coords: &[f32]
+    ) {
+        let &RenderContext {
+            ref mut renderer,
+            ref frame,
+            gfx2d: &Gfx2d {
+                ref mut buffer_uv,
+                ref mut batch_uv,
+                ..
+            }
+        } = self;
+        let mut vertex_data = Vec::new();
+        let n = vertices.len() / 2;
+        for i in range(0, n) {
+            vertex_data.push(
+                VertexUV::new(
+                    [vertices[2 * i], vertices[2 * i + 1]],
+                    [
+                        colors[4 * i],
+                        colors[4 * i + 1],
+                        colors[4 * i + 2],
+                        colors[4 * i + 3]
+                    ],
+                    [
+                        texture_coords[2 * i],
+                        texture_coords[2 * i + 1]
+                    ]
+                )
+            );
+        }
+
+        let n = vertex_data.len();
+        renderer.update_buffer_vec(*buffer_uv, vertex_data, 0);
+        batch_uv.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
+        renderer.draw(&*batch_uv, *frame);
     }
 }
