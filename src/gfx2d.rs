@@ -141,16 +141,17 @@ struct ParamsUV {
 }
 
 /// The graphics back-end.
-pub struct Gfx2d<C: gfx::CommandBuffer> {
+pub struct Gfx2d {
     buffer: gfx::BufferHandle<Vertex>,
     buffer_uv: gfx::BufferHandle<VertexUV>,
     batch: gfx::batch::OwnedBatch<(), ()>,
     batch_uv: OwnedBatchUV,
 }
 
-impl<C: gfx::CommandBuffer> Gfx2d<C> {
+impl Gfx2d {
     /// Creates a new Gfx2d object.
-    pub fn new<D: gfx::Device<C>>(device: &mut D) -> Gfx2d<C> {
+    pub fn new<D: gfx::Device<C>, 
+               C: gfx::CommandBuffer>(device: &mut D) -> Gfx2d {
         let program = device.link_program(
                 VERTEX_SHADER.clone(),
                 FRAGMENT_SHADER.clone()
@@ -204,14 +205,14 @@ impl<C: gfx::CommandBuffer> Gfx2d<C> {
 pub struct RenderContext<'a, C: 'a + gfx::CommandBuffer> {
     renderer: &'a mut gfx::Renderer<C>,
     frame: &'a gfx::Frame,
-    gfx2d: &'a mut Gfx2d<C>,
+    gfx2d: &'a mut Gfx2d,
 }
 
 impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(renderer: &'a mut gfx::Renderer<C>,
                frame: &'a gfx::Frame,
-               gfx2d: &'a mut Gfx2d<C>) -> RenderContext<'a, C> {
+               gfx2d: &'a mut Gfx2d) -> RenderContext<'a, C> {
         RenderContext {
             renderer: renderer,
             frame: frame,
