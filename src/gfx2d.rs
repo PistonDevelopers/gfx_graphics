@@ -150,7 +150,7 @@ pub struct Gfx2d {
 
 impl Gfx2d {
     /// Creates a new Gfx2d object.
-    pub fn new<D: gfx::Device<C>, 
+    pub fn new<D: gfx::Device<C>,
                C: gfx::CommandBuffer>(device: &mut D) -> Gfx2d {
         let program = device.link_program(
                 VERTEX_SHADER.clone(),
@@ -183,7 +183,7 @@ impl Gfx2d {
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).unwrap();
         device.update_texture(&texture, &image_info,
-                &vec![0x20u8, 0xA0u8, 0xC0u8, 0x00u8].as_slice())
+                [0x20u8, 0xA0u8, 0xC0u8, 0x00u8])
             .unwrap();
         let params_uv = ParamsUV {
             s_texture: (texture, Some(sampler))
@@ -206,6 +206,8 @@ pub struct RenderContext<'a, C: 'a + gfx::CommandBuffer> {
     renderer: &'a mut gfx::Renderer<C>,
     frame: &'a gfx::Frame,
     gfx2d: &'a mut Gfx2d,
+    data_vertex: Vec<Vertex>,
+    data_vertex_uv: Vec<VertexUV>,
 }
 
 impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
@@ -216,7 +218,9 @@ impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
         RenderContext {
             renderer: renderer,
             frame: frame,
-            gfx2d: gfx2d
+            gfx2d: gfx2d,
+            data_vertex: Vec::new(),
+            data_vertex_uv: Vec::new(),
         }
     }
 }
@@ -275,12 +279,14 @@ for RenderContext<'a, C> {
                 ref mut buffer,
                 ref mut batch,
                 ..
-            }
+            },
+            ref mut data_vertex,
+            ..
         } = self;
-        let n = vertices.len() / 2;
-        let mut vertex_data = Vec::with_capacity(n);
-        for i in range(0, n) {
-            vertex_data.push(
+
+        data_vertex.truncate(0);
+        for i in range(0, vertices.len() / 2) {
+            data_vertex.push(
                 Vertex::new(
                     [vertices[2 * i], vertices[2 * i + 1]],
                     [
@@ -293,8 +299,8 @@ for RenderContext<'a, C> {
             );
         }
 
-        let n = vertex_data.len();
-        renderer.update_buffer_vec(*buffer, vertex_data, 0);
+        let n = data_vertex.len();
+        renderer.update_buffer_vec(*buffer, data_vertex.as_slice(), 0);
         batch.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
         renderer.draw(&*batch, *frame);
     }
@@ -328,12 +334,14 @@ for RenderContext<'a, C> {
                 ref mut buffer_uv,
                 ref mut batch_uv,
                 ..
-            }
+            },
+            ref mut data_vertex_uv,
+            ..
         } = self;
-        let n = vertices.len() / 2;
-        let mut vertex_data = Vec::with_capacity(n);
-        for i in range(0, n) {
-            vertex_data.push(
+
+        data_vertex_uv.truncate(0);
+        for i in range(0, vertices.len() / 2) {
+            data_vertex_uv.push(
                 VertexUV::new(
                     [vertices[2 * i], vertices[2 * i + 1]],
                     [
@@ -350,8 +358,8 @@ for RenderContext<'a, C> {
             );
         }
 
-        let n = vertex_data.len();
-        renderer.update_buffer_vec(*buffer_uv, vertex_data, 0);
+        let n = data_vertex_uv.len();
+        renderer.update_buffer_vec(*buffer_uv, data_vertex_uv.as_slice(), 0);
         batch_uv.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
         renderer.draw(&*batch_uv, *frame);
     }
