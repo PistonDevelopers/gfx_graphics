@@ -40,7 +40,7 @@ impl Texture {
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info).unwrap();
         device.update_texture(&texture, &image_info,
-            &img.raw_pixels().as_slice())
+            img.raw_pixels().as_slice())
         .unwrap();
 
         Ok(Texture {
