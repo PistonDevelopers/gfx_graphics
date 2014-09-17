@@ -102,37 +102,22 @@ void main()
 "
 };
 
-#[vertex_format]
-struct Vertex {
-    pos: [f32, ..2],
-    color: [f32, ..4],
-}
+static POS_COMPONENTS: uint = 2;
+static COLOR_COMPONENTS: uint = 4;
+static UV_COMPONENTS: uint = 2;
 
-impl Vertex {
-    fn new(pos: [f32, ..2], color: [f32, ..4]) -> Vertex {
-        Vertex {
-            pos: pos,
-            color: color,
-        }
-    }
-}
+// Boiler plate for automatic attribute construction.
+// Needs to be improved on gfx-rs side.
+// For some reason, using ``*_COMPONENT` triggers some macros errors.
 
 #[vertex_format]
-struct VertexUV {
-    pos: [f32, ..2],
-    color: [f32, ..4],
-    uv: [f32, ..2],
-}
+struct PositionFormat { v: [f32, ..2] }
 
-impl VertexUV {
-    fn new(pos: [f32, ..2], color: [f32, ..4], uv: [f32, ..2]) -> VertexUV {
-        VertexUV {
-            pos: pos,
-            color: color,
-            uv: uv,
-        }
-    }
-}
+#[vertex_format]
+struct ColorFormat { v: [f32, ..4] }
+
+#[vertex_format]
+struct TexCoordsFormat { v: [f32, ..2] }
 
 #[allow(unused_imports)]
 #[shader_param(BatchUV, OwnedBatchUV)]
@@ -142,8 +127,9 @@ struct ParamsUV {
 
 /// The graphics back-end.
 pub struct Gfx2d {
-    buffer: gfx::BufferHandle<Vertex>,
-    buffer_uv: gfx::BufferHandle<VertexUV>,
+    buffer_pos: gfx::BufferHandle<f32>,
+    buffer_color: gfx::BufferHandle<f32>,
+    buffer_uv: gfx::BufferHandle<f32>,
     batch: gfx::batch::OwnedBatch<(), ()>,
     batch_uv: OwnedBatchUV,
 }
@@ -160,10 +146,33 @@ impl Gfx2d {
                 VERTEX_SHADER_UV.clone(),
                 FRAGMENT_SHADER_UV.clone()
             ).unwrap();
-        let buffer = device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic);
-        let buffer_uv = device.create_buffer(BUFFER_SIZE, gfx::UsageDynamic);
-        let mesh = gfx::Mesh::from_format(buffer, BUFFER_SIZE as u32);
-        let mesh_uv = gfx::Mesh::from_format(buffer_uv, BUFFER_SIZE as u32);
+
+        let buffer_pos = device.create_buffer(
+            POS_COMPONENTS * BUFFER_SIZE,
+            gfx::UsageDynamic);
+        let buffer_color = device.create_buffer(
+            COLOR_COMPONENTS * BUFFER_SIZE,
+            gfx::UsageDynamic);
+        let buffer_uv = device.create_buffer(
+            UV_COMPONENTS * BUFFER_SIZE,
+            gfx::UsageDynamic);
+
+        let mut mesh = gfx::Mesh::new(BUFFER_SIZE as u32);
+        mesh.attributes.push_all_move(gfx::VertexFormat::generate(
+            None::<PositionFormat>,
+            buffer_pos.raw()
+        ));
+        mesh.attributes.push_all_move(gfx::VertexFormat::generate(
+            None::<ColorFormat>,
+            buffer_color.raw()
+        ));
+
+        let mut mesh_uv = mesh.clone();
+        mesh_uv.attributes.push_all_move(gfx::VertexFormat::generate(
+            None::<TexCoordsFormat>,
+            buffer_uv.raw()
+        ));
+
         let batch = gfx::batch::OwnedBatch::new(mesh, program, ()).unwrap();
 
         let sampler = device.create_sampler(
@@ -193,7 +202,8 @@ impl Gfx2d {
             mesh_uv, program_uv, params_uv).unwrap();
 
         Gfx2d {
-            buffer: buffer,
+            buffer_pos: buffer_pos,
+            buffer_color: buffer_color,
             buffer_uv: buffer_uv,
             batch: batch,
             batch_uv: batch_uv,
@@ -206,8 +216,6 @@ pub struct RenderContext<'a, C: 'a + gfx::CommandBuffer> {
     renderer: &'a mut gfx::Renderer<C>,
     frame: &'a gfx::Frame,
     gfx2d: &'a mut Gfx2d,
-    data_vertex: Vec<Vertex>,
-    data_vertex_uv: Vec<VertexUV>,
 }
 
 impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
@@ -219,8 +227,6 @@ impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
             renderer: renderer,
             frame: frame,
             gfx2d: gfx2d,
-            data_vertex: Vec::new(),
-            data_vertex_uv: Vec::new(),
         }
     }
 }
@@ -276,31 +282,21 @@ for RenderContext<'a, C> {
             ref mut renderer,
             ref frame,
             gfx2d: &Gfx2d {
-                ref mut buffer,
+                ref mut buffer_pos,
+                ref mut buffer_color,
                 ref mut batch,
                 ..
             },
-            ref mut data_vertex,
-            ..
         } = self;
 
-        data_vertex.truncate(0);
-        for i in range(0, vertices.len() / 2) {
-            data_vertex.push(
-                Vertex::new(
-                    [vertices[2 * i], vertices[2 * i + 1]],
-                    [
-                        colors[4 * i],
-                        colors[4 * i + 1],
-                        colors[4 * i + 2],
-                        colors[4 * i + 3]
-                    ]
-                )
-            );
-        }
+        assert_eq!(
+            vertices.len() * COLOR_COMPONENTS,
+            colors.len() * POS_COMPONENTS
+        );
+        renderer.update_buffer_vec(*buffer_pos, vertices, 0);
+        renderer.update_buffer_vec(*buffer_color, colors, 0);
 
-        let n = data_vertex.len();
-        renderer.update_buffer_vec(*buffer, data_vertex.as_slice(), 0);
+        let n = vertices.len() / POS_COMPONENTS;
         batch.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
         renderer.draw(&*batch, *frame);
     }
@@ -331,35 +327,27 @@ for RenderContext<'a, C> {
             ref mut renderer,
             ref frame,
             gfx2d: &Gfx2d {
+                ref mut buffer_pos,
+                ref mut buffer_color,
                 ref mut buffer_uv,
                 ref mut batch_uv,
                 ..
             },
-            ref mut data_vertex_uv,
-            ..
         } = self;
 
-        data_vertex_uv.truncate(0);
-        for i in range(0, vertices.len() / 2) {
-            data_vertex_uv.push(
-                VertexUV::new(
-                    [vertices[2 * i], vertices[2 * i + 1]],
-                    [
-                        colors[4 * i],
-                        colors[4 * i + 1],
-                        colors[4 * i + 2],
-                        colors[4 * i + 3]
-                    ],
-                    [
-                        texture_coords[2 * i],
-                        texture_coords[2 * i + 1]
-                    ]
-                )
-            );
-        }
+        assert_eq!(
+            vertices.len() * COLOR_COMPONENTS,
+            colors.len() * POS_COMPONENTS
+        );
+        assert_eq!(
+            vertices.len() * UV_COMPONENTS,
+            texture_coords.len() * POS_COMPONENTS
+        );
+        renderer.update_buffer_vec(*buffer_pos, vertices, 0);
+        renderer.update_buffer_vec(*buffer_color, colors, 0);
+        renderer.update_buffer_vec(*buffer_uv, texture_coords, 0);
 
-        let n = data_vertex_uv.len();
-        renderer.update_buffer_vec(*buffer_uv, data_vertex_uv.as_slice(), 0);
+        let n = vertices.len() / POS_COMPONENTS;
         batch_uv.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
         renderer.draw(&*batch_uv, *frame);
     }
