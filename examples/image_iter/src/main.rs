@@ -6,6 +6,7 @@ extern crate piston;
 extern crate sdl2_game_window;
 extern crate gfx;
 extern crate gfx_graphics;
+extern crate sdl2;
 
 use gfx::{Device, DeviceHelper};
 use gfx_graphics::{
@@ -19,6 +20,7 @@ use piston::{
     AssetStore,
     EventIterator,
     EventSettings,
+    Window,
     WindowSettings,
     Render,
 };
@@ -36,7 +38,11 @@ fn main() {
         }
     );
 
-    let (mut device, frame) = window.gfx();
+    let mut device = gfx::GlDevice::new(|s| unsafe {
+        std::mem::transmute(sdl2::video::gl_get_proc_address(s))
+    });
+    let (w, h) = window.get_size();
+    let frame = gfx::Frame::new(w as u16, h as u16);
     let mut renderer = device.create_renderer();
 
     let asset_store = AssetStore::from_folder("../bin/assets");
