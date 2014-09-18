@@ -111,13 +111,13 @@ static UV_COMPONENTS: uint = 2;
 // For some reason, using ``*_COMPONENT` triggers some macros errors.
 
 #[vertex_format]
-struct PositionFormat { v: [f32, ..2] }
+struct PositionFormat { pos: [f32, ..2] }
 
 #[vertex_format]
-struct ColorFormat { v: [f32, ..4] }
+struct ColorFormat { color: [f32, ..4] }
 
 #[vertex_format]
-struct TexCoordsFormat { v: [f32, ..2] }
+struct TexCoordsFormat { uv: [f32, ..2] }
 
 #[allow(unused_imports)]
 #[shader_param(BatchUV, OwnedBatchUV)]
@@ -167,6 +167,7 @@ impl Gfx2d {
             buffer_color.raw()
         ));
 
+        // Reuse parameters from `mesh`.
         let mut mesh_uv = mesh.clone();
         mesh_uv.attributes.push_all_move(gfx::VertexFormat::generate(
             None::<TexCoordsFormat>,
