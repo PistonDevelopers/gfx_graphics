@@ -1,7 +1,6 @@
 
 #![feature(globs)]
 
-extern crate graphics;
 extern crate piston;
 extern crate sdl2_game_window;
 extern crate gfx;
@@ -15,7 +14,7 @@ use gfx_graphics::{
     Texture,
 };
 use sdl2_game_window::WindowSDL2;
-use graphics::*;
+use piston::graphics::*;
 use piston::{
     AssetStore,
     EventIterator,
