@@ -20,8 +20,8 @@ git = "https://github.com/gfx-rs/gfx-rs"
 
 [dependencies.graphics]
 
-git = "https://github.com/pistondevelopers/rust-graphics"
+git = "https://github.com/pistondevelopers/graphics"
 
 [dependencies.image]
 
-git = "https://github.com/pistondevelopers/rust-image"
+git = "https://github.com/pistondevelopers/image"
