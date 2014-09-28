@@ -158,21 +158,21 @@ impl Gfx2d {
             gfx::UsageDynamic);
 
         let mut mesh = gfx::Mesh::new(BUFFER_SIZE as u32);
-        mesh.attributes.push_all_move(gfx::VertexFormat::generate(
+        mesh.attributes.extend(gfx::VertexFormat::generate(
             None::<PositionFormat>,
             buffer_pos.raw()
-        ));
-        mesh.attributes.push_all_move(gfx::VertexFormat::generate(
+        ).into_iter());
+        mesh.attributes.extend(gfx::VertexFormat::generate(
             None::<ColorFormat>,
             buffer_color.raw()
-        ));
+        ).into_iter());
 
         // Reuse parameters from `mesh`.
         let mut mesh_uv = mesh.clone();
-        mesh_uv.attributes.push_all_move(gfx::VertexFormat::generate(
+        mesh_uv.attributes.extend(gfx::VertexFormat::generate(
             None::<TexCoordsFormat>,
             buffer_uv.raw()
-        ));
+        ).into_iter());
 
         let batch = gfx::batch::OwnedBatch::new(mesh, program, ()).unwrap();
 
@@ -299,7 +299,7 @@ for RenderContext<'a, C> {
 
         let n = vertices.len() / POS_COMPONENTS;
         batch.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
-        renderer.draw(&*batch, *frame);
+        renderer.draw(batch, *frame);
     }
 
     fn supports_single_texture(&self) -> bool { true }
@@ -350,6 +350,6 @@ for RenderContext<'a, C> {
 
         let n = vertices.len() / POS_COMPONENTS;
         batch_uv.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
-        renderer.draw(&*batch_uv, *frame);
+        renderer.draw(batch_uv, *frame);
     }
 }
