@@ -7,6 +7,14 @@ extern crate gfx;
 extern crate gfx_graphics;
 extern crate sdl2;
 
+use piston::graphics::{
+    Context,
+    RelativeTransform2d,
+    AddImage,
+    AddColor,
+    AddRectangle,
+    Draw,
+};
 use gfx::{Device, DeviceHelper};
 use gfx_graphics::{
     Gfx2d,
@@ -14,7 +22,6 @@ use gfx_graphics::{
     Texture,
 };
 use sdl2_game_window::WindowSDL2;
-use piston::graphics::*;
 use piston::{
     AssetStore,
     EventIterator,
