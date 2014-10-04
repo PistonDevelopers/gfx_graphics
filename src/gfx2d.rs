@@ -81,7 +81,6 @@ void main() {
 static FRAGMENT_SHADER_UV: gfx::ShaderSource = shaders!{
     GLSL_120: b"
 #version 120
-uniform sampler2D s_texture;
 varying vec2 v_UV;
 varying vec4 v_Color;
 void main()
@@ -257,19 +256,23 @@ for RenderContext<'a, C> {
         use std::default::Default;
         use gfx::state::{Normal, Inverse, Factor};
 
-        self.gfx2d.batch.state.blend = Some(gfx::state::Blend {
-                value: [1.0, 1.0, 1.0, 1.0],
-                color: gfx::state::BlendChannel {
-                        equation: gfx::state::FuncAdd,
-                        source: Factor(Normal, gfx::state::SourceAlpha),
-                        destination: Factor(Inverse, gfx::state::SourceAlpha)
-                    },
-                alpha: Default::default()
-            })
+        let blend = gfx::state::Blend {
+            value: [1.0, 1.0, 1.0, 1.0],
+            color: gfx::state::BlendChannel {
+                    equation: gfx::state::FuncAdd,
+                    source: Factor(Normal, gfx::state::SourceAlpha),
+                    destination: Factor(Inverse, gfx::state::SourceAlpha)
+                },
+            alpha: Default::default()
+        };
+
+        self.gfx2d.batch.state.blend = Some(blend);
+        self.gfx2d.batch_uv.state.blend = Some(blend);
     }
 
     fn disable_alpha_blend(&mut self) {
         self.gfx2d.batch.state.blend = None;
+        self.gfx2d.batch_uv.state.blend = None;
     }
 
     fn supports_tri_list_xy_f32_rgba_f32(&self) -> bool { true }
