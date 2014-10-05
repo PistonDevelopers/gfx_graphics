@@ -316,8 +316,9 @@ for RenderContext<'a, C> {
 
     fn disable_single_texture(&mut self) {}
 
-    // Assume all textures has alpha channel for now.
-    fn has_texture_alpha(&self, _texture: &Texture) -> bool { true }
+    fn has_texture_alpha(&self, texture: &Texture) -> bool {
+        texture.handle.get_info().format.get_components() == Some(gfx::tex::RGBA)
+    }
 
     fn supports_tri_list_xy_f32_rgba_f32_uv_f32(&self) -> bool { true }
 
