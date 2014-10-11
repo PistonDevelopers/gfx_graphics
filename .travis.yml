@@ -20,7 +20,7 @@ script:
     - cargo build -v
     - cargo test -v
     - cargo doc -v
-    - cd examples/image_iter/
+    - cd examples/imagetest/
     - cargo build -v
     - cargo doc -v
 after_success:

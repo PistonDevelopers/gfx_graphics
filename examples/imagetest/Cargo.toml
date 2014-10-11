@@ -1,6 +1,6 @@
 [package]
 
-name = "image_iter"
+name = "imagetest"
 version = "0.0.0"
 authors = ["bvssvni <bvssvni@gmail.com>"]
 tags = []
@@ -21,3 +21,4 @@ git = "https://github.com/pistondevelopers/sdl2_game_window"
 [dependencies.gfx_graphics]
 
 path = "../../"
+
