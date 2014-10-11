@@ -34,7 +34,7 @@ fn main() {
     let mut window = WindowSDL2::new(
         opengl,
         WindowSettings {
-            title: "Image".to_string(),
+            title: "gfx_graphics: imagetest".to_string(),
             size: [300, 300],
             fullscreen: false,
             exit_on_esc: true,
