@@ -215,9 +215,9 @@ impl Gfx2d {
         &mut self,
         renderer: &mut gfx::Renderer<C>,
         frame: &gfx::Frame,
-        f: |c: Context, g: &mut RenderContext<C>|
+        f: |c: Context, g: &mut GraphicsBackEnd<C>|
     ) {
-        let ref mut g = RenderContext::new(
+        let ref mut g = GraphicsBackEnd::new(
             renderer, 
             frame, 
             self
@@ -231,18 +231,18 @@ impl Gfx2d {
 }
 
 /// Used for rendering 2D graphics.
-pub struct RenderContext<'a, C: 'a + gfx::CommandBuffer> {
+pub struct GraphicsBackEnd<'a, C: 'a + gfx::CommandBuffer> {
     renderer: &'a mut gfx::Renderer<C>,
     frame: &'a gfx::Frame,
     gfx2d: &'a mut Gfx2d,
 }
 
-impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
+impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(renderer: &'a mut gfx::Renderer<C>,
                frame: &'a gfx::Frame,
-               gfx2d: &'a mut Gfx2d) -> RenderContext<'a, C> {
-        RenderContext {
+               gfx2d: &'a mut Gfx2d) -> GraphicsBackEnd<'a, C> {
+        GraphicsBackEnd {
             renderer: renderer,
             frame: frame,
             gfx2d: gfx2d,
@@ -251,11 +251,11 @@ impl<'a, C: gfx::CommandBuffer> RenderContext<'a, C> {
 }
 
 impl<'a, C: gfx::CommandBuffer> BackEnd<Texture>
-for RenderContext<'a, C> {
+for GraphicsBackEnd<'a, C> {
     fn supports_clear_rgba(&self) -> bool { true }
 
     fn clear_rgba(&mut self, r: f32, g: f32, b: f32, a: f32) {
-        let &RenderContext {
+        let &GraphicsBackEnd {
             ref mut renderer,
             frame,
             ..
@@ -301,7 +301,7 @@ for RenderContext<'a, C> {
         vertices: &[f32],
         colors: &[f32]
     ) {
-        let &RenderContext {
+        let &GraphicsBackEnd {
             ref mut renderer,
             ref frame,
             gfx2d: &Gfx2d {
@@ -347,7 +347,7 @@ for RenderContext<'a, C> {
         colors: &[f32],
         texture_coords: &[f32]
     ) {
-        let &RenderContext {
+        let &GraphicsBackEnd {
             ref mut renderer,
             ref frame,
             gfx2d: &Gfx2d {

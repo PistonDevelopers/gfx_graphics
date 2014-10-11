@@ -12,7 +12,7 @@ extern crate graphics;
 extern crate image;
 
 pub use gfx2d::Gfx2d;
-pub use gfx2d::RenderContext;
+pub use gfx2d::GraphicsBackEnd;
 pub use texture::Texture;
 
 mod gfx2d;
