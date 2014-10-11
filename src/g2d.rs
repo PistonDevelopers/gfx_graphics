@@ -211,7 +211,7 @@ impl G2D {
     }
 
     /// Renders graphics to a Gfx renderer.
-    pub fn render<C: gfx::CommandBuffer>(
+    pub fn draw<C: gfx::CommandBuffer>(
         &mut self,
         renderer: &mut gfx::Renderer<C>,
         frame: &gfx::Frame,
