@@ -1,7 +1,7 @@
 
 use gfx;
 use gfx::DeviceHelper;
-use graphics::BackEnd;
+use graphics::{ Context, BackEnd };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 
 use Texture;
@@ -208,6 +208,25 @@ impl Gfx2d {
             batch: batch,
             batch_uv: batch_uv,
         }
+    }
+
+    /// Renders graphics to a Gfx renderer.
+    pub fn render<C: gfx::CommandBuffer>(
+        &mut self,
+        renderer: &mut gfx::Renderer<C>,
+        frame: &gfx::Frame,
+        f: |c: Context, g: &mut RenderContext<C>|
+    ) {
+        let ref mut g = RenderContext::new(
+            renderer, 
+            frame, 
+            self
+        );
+        let c = Context::abs(
+            frame.width as f64,
+            frame.height as f64
+        );
+        f(c, g);
     }
 }
 
