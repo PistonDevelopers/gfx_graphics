@@ -7,6 +7,13 @@ extern crate gfx;
 extern crate gfx_graphics;
 extern crate sdl2;
 
+use piston::event::{
+    EventIterator,
+    EventSettings,
+    Window,
+    WindowSettings,
+};
+use piston::AssetStore;
 use piston::graphics::{
     RelativeTransform2d,
     AddImage,
@@ -20,14 +27,6 @@ use gfx_graphics::{
     Texture,
 };
 use sdl2_game_window::WindowSDL2;
-use piston::{
-    AssetStore,
-    EventIterator,
-    EventSettings,
-    Window,
-    WindowSettings,
-    Render,
-};
 
 fn main() {
     let opengl = piston::shader_version::opengl::OpenGL_3_2;
@@ -59,19 +58,17 @@ fn main() {
         };
     let mut g2d = G2D::new(&mut device);
     for e in EventIterator::new(&mut window, &event_settings) {
-        match e {
-            Render(args) => {
-                g2d.render(&mut renderer, &frame, |c, g| {
-                    c.rgb(1.0, 1.0, 1.0).draw(g);
-                    c.rect(0.0, 0.0, 100.0, 100.0).rgb(1.0, 0.0, 0.0).draw(g);
-                    c.rect(50.0, 50.0, 100.0, 100.0).rgba(0.0, 1.0, 0.0, 0.3).draw(g);
-                    c.trans(100.0, 100.0).image(&image).draw(g);
-                });
+        use piston::event::RenderEvent;
+        e.render(|_| {
+            g2d.draw(&mut renderer, &frame, |c, g| {
+                c.rgb(1.0, 1.0, 1.0).draw(g);
+                c.rect(0.0, 0.0, 100.0, 100.0).rgb(1.0, 0.0, 0.0).draw(g);
+                c.rect(50.0, 50.0, 100.0, 100.0).rgba(0.0, 1.0, 0.0, 0.3).draw(g);
+                c.trans(100.0, 100.0).image(&image).draw(g);
+            });
 
-                device.submit(renderer.as_buffer());
-                renderer.reset();
-            },
-            _ => {},
-        }
+            device.submit(renderer.as_buffer());
+            renderer.reset();
+       });
     }
 }
