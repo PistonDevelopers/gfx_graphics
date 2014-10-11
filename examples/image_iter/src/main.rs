@@ -8,7 +8,6 @@ extern crate gfx_graphics;
 extern crate sdl2;
 
 use piston::graphics::{
-    Context,
     RelativeTransform2d,
     AddImage,
     AddColor,
@@ -18,7 +17,6 @@ use piston::graphics::{
 use gfx::{Device, DeviceHelper};
 use gfx_graphics::{
     Gfx2d,
-    RenderContext,
     Texture,
 };
 use sdl2_game_window::WindowSDL2;
@@ -59,18 +57,16 @@ fn main() {
             updates_per_second: 120,
             max_frames_per_second: 60,
         };
-    let mut gfx2d = Gfx2d::new(&mut device);
+    let mut g2d = Gfx2d::new(&mut device);
     for e in EventIterator::new(&mut window, &event_settings) {
         match e {
             Render(args) => {
-                {
-                    let ref mut g = RenderContext::new(&mut renderer, &frame, &mut gfx2d);
-                    let c = Context::abs(args.width as f64, args.height as f64);
+                g2d.render(&mut renderer, &frame, |c, g| {
                     c.rgb(1.0, 1.0, 1.0).draw(g);
                     c.rect(0.0, 0.0, 100.0, 100.0).rgb(1.0, 0.0, 0.0).draw(g);
                     c.rect(50.0, 50.0, 100.0, 100.0).rgba(0.0, 1.0, 0.0, 0.3).draw(g);
                     c.trans(100.0, 100.0).image(&image).draw(g);
-                }
+                });
 
                 device.submit(renderer.as_buffer());
                 renderer.reset();
