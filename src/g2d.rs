@@ -125,7 +125,7 @@ struct ParamsUV {
 }
 
 /// The graphics back-end.
-pub struct Gfx2d {
+pub struct G2D {
     buffer_pos: gfx::BufferHandle<f32>,
     buffer_color: gfx::BufferHandle<f32>,
     buffer_uv: gfx::BufferHandle<f32>,
@@ -133,10 +133,10 @@ pub struct Gfx2d {
     batch_uv: OwnedBatchUV,
 }
 
-impl Gfx2d {
-    /// Creates a new Gfx2d object.
+impl G2D {
+    /// Creates a new G2D object.
     pub fn new<D: gfx::Device<C>,
-               C: gfx::CommandBuffer>(device: &mut D) -> Gfx2d {
+               C: gfx::CommandBuffer>(device: &mut D) -> G2D {
         let program = device.link_program(
                 VERTEX_SHADER.clone(),
                 FRAGMENT_SHADER.clone()
@@ -201,7 +201,7 @@ impl Gfx2d {
         let batch_uv = gfx::batch::OwnedBatch::new(
             mesh_uv, program_uv, params_uv).unwrap();
 
-        Gfx2d {
+        G2D {
             buffer_pos: buffer_pos,
             buffer_color: buffer_color,
             buffer_uv: buffer_uv,
@@ -234,18 +234,18 @@ impl Gfx2d {
 pub struct GraphicsBackEnd<'a, C: 'a + gfx::CommandBuffer> {
     renderer: &'a mut gfx::Renderer<C>,
     frame: &'a gfx::Frame,
-    gfx2d: &'a mut Gfx2d,
+    g2d: &'a mut G2D,
 }
 
 impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(renderer: &'a mut gfx::Renderer<C>,
                frame: &'a gfx::Frame,
-               gfx2d: &'a mut Gfx2d) -> GraphicsBackEnd<'a, C> {
+               g2d: &'a mut G2D) -> GraphicsBackEnd<'a, C> {
         GraphicsBackEnd {
             renderer: renderer,
             frame: frame,
-            gfx2d: gfx2d,
+            g2d: g2d,
         }
     }
 }
@@ -285,13 +285,13 @@ for GraphicsBackEnd<'a, C> {
             alpha: Default::default()
         };
 
-        self.gfx2d.batch.state.blend = Some(blend);
-        self.gfx2d.batch_uv.state.blend = Some(blend);
+        self.g2d.batch.state.blend = Some(blend);
+        self.g2d.batch_uv.state.blend = Some(blend);
     }
 
     fn disable_alpha_blend(&mut self) {
-        self.gfx2d.batch.state.blend = None;
-        self.gfx2d.batch_uv.state.blend = None;
+        self.g2d.batch.state.blend = None;
+        self.g2d.batch_uv.state.blend = None;
     }
 
     fn supports_tri_list_xy_f32_rgba_f32(&self) -> bool { true }
@@ -304,7 +304,7 @@ for GraphicsBackEnd<'a, C> {
         let &GraphicsBackEnd {
             ref mut renderer,
             ref frame,
-            gfx2d: &Gfx2d {
+            g2d: &G2D {
                 ref mut buffer_pos,
                 ref mut buffer_color,
                 ref mut batch,
@@ -329,7 +329,7 @@ for GraphicsBackEnd<'a, C> {
     fn enable_single_texture(&mut self, texture: &Texture) {
         let ParamsUV {
             s_texture: (ref mut s_texture, _)
-        } = self.gfx2d.batch_uv.param;
+        } = self.g2d.batch_uv.param;
         *s_texture = texture.handle;
     }
 
@@ -350,7 +350,7 @@ for GraphicsBackEnd<'a, C> {
         let &GraphicsBackEnd {
             ref mut renderer,
             ref frame,
-            gfx2d: &Gfx2d {
+            g2d: &G2D {
                 ref mut buffer_pos,
                 ref mut buffer_color,
                 ref mut buffer_uv,
