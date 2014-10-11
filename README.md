@@ -22,6 +22,8 @@ for e in EventIterator::new(&mut window, &event_settings) {
 }
 ```
 
+![screenshot](./screenshot.png)
+
 ### Dependency graph
 
 ![dependencies](./Cargo.png)
