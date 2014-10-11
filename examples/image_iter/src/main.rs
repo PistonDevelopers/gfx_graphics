@@ -16,7 +16,7 @@ use piston::graphics::{
 };
 use gfx::{Device, DeviceHelper};
 use gfx_graphics::{
-    Gfx2d,
+    G2D,
     Texture,
 };
 use sdl2_game_window::WindowSDL2;
@@ -57,7 +57,7 @@ fn main() {
             updates_per_second: 120,
             max_frames_per_second: 60,
         };
-    let mut g2d = Gfx2d::new(&mut device);
+    let mut g2d = G2D::new(&mut device);
     for e in EventIterator::new(&mut window, &event_settings) {
         match e {
             Render(args) => {
