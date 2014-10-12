@@ -76,6 +76,17 @@ impl Texture {
             handle: texture
         }
     }
+
+    /// Updates the texture with an image.
+    pub fn update<
+        C: gfx::CommandBuffer,
+        D: gfx::Device<C>
+    >(&mut self, device: &mut D, image: &ImageBuf<Rgba<u8>>) {
+        device.update_texture(&self.handle, 
+            &self.handle.get_info().to_image_info(),
+            image.pixelbuf().as_slice()
+        ).unwrap();
+    }
 }
 
 impl ImageSize for Texture {
