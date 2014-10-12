@@ -1,6 +1,10 @@
 use gfx;
 use image;
-use image::GenericImage;
+use image::{
+    GenericImage,
+    ImageBuf,
+    Rgba,
+};
 use graphics::{
     ImageSize
 };
@@ -46,6 +50,31 @@ impl Texture {
         Ok(Texture {
             handle: texture
         })
+    }
+    
+    /// Creates a texture from image.
+    pub fn from_image<
+        C: gfx::CommandBuffer,
+        D: gfx::Device<C>
+    >(device: &mut D, image: &ImageBuf<Rgba<u8>>) -> Texture {
+        let (width, height) = image.dimensions();
+        let texture_info = gfx::tex::TextureInfo {
+            width: width as u16,
+            height: height as u16,
+            depth: 1,
+            levels: 1,
+            kind: gfx::tex::Texture2D,
+            format: gfx::tex::RGBA8,
+        };
+        let image_info = texture_info.to_image_info();
+        let texture = device.create_texture(texture_info).unwrap();
+        device.update_texture(&texture, &image_info,
+            image.pixelbuf().as_slice())
+        .unwrap();
+
+        Texture {
+            handle: texture
+        }
     }
 }
 
