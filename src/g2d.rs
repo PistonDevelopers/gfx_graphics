@@ -266,7 +266,7 @@ for GraphicsBackEnd<'a, C> {
                     depth: 0.0,
                     stencil: 0,
                 },
-                gfx::Color,
+                gfx::COLOR,
                 frame
             );
     }
