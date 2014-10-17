@@ -81,6 +81,7 @@ void main() {
 static FRAGMENT_SHADER_UV: gfx::ShaderSource = shaders!{
     GLSL_120: b"
 #version 120
+uniform sampler2D s_texture;
 varying vec2 v_UV;
 varying vec4 v_Color;
 void main()
