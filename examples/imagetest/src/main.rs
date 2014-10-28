@@ -4,7 +4,7 @@
 extern crate shader_version;
 extern crate graphics;
 extern crate event;
-extern crate sdl2_game_window;
+extern crate sdl2_window;
 extern crate gfx;
 extern crate gfx_graphics;
 extern crate sdl2;
@@ -20,11 +20,11 @@ use gfx_graphics::{
     G2D,
     Texture,
 };
-use sdl2_game_window::WindowSDL2;
+use sdl2_window::Sdl2Window;
 
 fn main() {
     let opengl = shader_version::opengl::OpenGL_3_2;
-    let mut window = WindowSDL2::new(
+    let mut window = Sdl2Window::new(
         opengl,
         WindowSettings {
             title: "gfx_graphics: imagetest".to_string(),
