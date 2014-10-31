@@ -10,10 +10,11 @@ extern crate device;
 extern crate gfx;
 extern crate graphics;
 extern crate image;
+extern crate gfx_texture;
+
+pub use gfx_texture::Texture;
 
 pub use g2d::G2D;
 pub use g2d::GraphicsBackEnd;
-pub use texture::Texture;
 
 mod g2d;
-mod texture;
