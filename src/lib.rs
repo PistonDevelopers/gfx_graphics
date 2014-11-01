@@ -1,5 +1,4 @@
-#![crate_name = "gfx_graphics"]
-#![deny(missing_doc)]
+#![deny(missing_docs)]
 #![feature(phase)]
 
 //! The implementation of a Rust-Graphics back-end using gfx-rs.
