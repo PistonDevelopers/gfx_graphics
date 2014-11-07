@@ -9,9 +9,9 @@ extern crate gfx;
 extern crate gfx_graphics;
 extern crate sdl2;
 
+use std::cell::RefCell;
 use event::{
-    EventIterator,
-    EventSettings,
+    Events,
     Window,
     WindowSettings,
 };
@@ -24,7 +24,7 @@ use sdl2_window::Sdl2Window;
 
 fn main() {
     let opengl = shader_version::opengl::OpenGL_3_2;
-    let mut window = Sdl2Window::new(
+    let window = Sdl2Window::new(
         opengl,
         WindowSettings {
             title: "gfx_graphics: imagetest".to_string(),
@@ -44,12 +44,9 @@ fn main() {
 
     let image = Texture::from_path(&mut device, 
         &Path::new("rust.png")).unwrap();
-    let event_settings = EventSettings {
-            updates_per_second: 120,
-            max_frames_per_second: 60,
-        };
     let mut g2d = G2D::new(&mut device);
-    for e in EventIterator::new(&mut window, &event_settings) {
+    let window = RefCell::new(window);
+    for e in Events::new(&window) {
         use event::RenderEvent;
         e.render(|_| {
             g2d.draw(&mut renderer, &frame, |c, g| {
