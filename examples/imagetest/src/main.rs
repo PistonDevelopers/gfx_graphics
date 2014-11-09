@@ -1,6 +1,7 @@
 
 #![feature(globs)]
 
+extern crate current;
 extern crate shader_version;
 extern crate graphics;
 extern crate event;
@@ -9,12 +10,9 @@ extern crate gfx;
 extern crate gfx_graphics;
 extern crate sdl2;
 
+use current::{ Get };
 use std::cell::RefCell;
-use event::{
-    Events,
-    Window,
-    WindowSettings,
-};
+use event::{ Events, WindowSettings };
 use gfx::{Device, DeviceHelper};
 use gfx_graphics::{
     G2D,
@@ -38,7 +36,7 @@ fn main() {
     let mut device = gfx::GlDevice::new(|s| unsafe {
         std::mem::transmute(sdl2::video::gl_get_proc_address(s))
     });
-    let (w, h) = window.get_size();
+    let event::window::Size([w, h]) = window.get();
     let frame = gfx::Frame::new(w as u16, h as u16);
     let mut renderer = device.create_renderer();
 
