@@ -1,4 +1,5 @@
 
+use render;
 use gfx;
 use gfx::DeviceHelper;
 use graphics::{ Context, BackEnd };
@@ -6,7 +7,7 @@ use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 
 use Texture;
 
-static VERTEX_SHADER: gfx::ShaderSource = shaders!{
+static VERTEX_SHADER: gfx::ShaderSource<'static> = shaders!{
     GLSL_120: b"
 #version 120
 attribute vec2 pos;
@@ -29,7 +30,7 @@ void main() {
 "
 };
 
-static FRAGMENT_SHADER: gfx::ShaderSource = shaders!{
+static FRAGMENT_SHADER: gfx::ShaderSource<'static> = shaders!{
     GLSL_120: b"
 #version 120
 varying vec4 v_Color;
@@ -47,7 +48,7 @@ void main() {
 "
 };
 
-static VERTEX_SHADER_UV: gfx::ShaderSource = shaders!{
+static VERTEX_SHADER_UV: gfx::ShaderSource<'static> = shaders!{
     GLSL_120: b"
 #version 120
 attribute vec2 pos;
@@ -78,7 +79,7 @@ void main() {
 "
 };
 
-static FRAGMENT_SHADER_UV: gfx::ShaderSource = shaders!{
+static FRAGMENT_SHADER_UV: gfx::ShaderSource<'static> = shaders!{
     GLSL_120: b"
 #version 120
 uniform sampler2D s_texture;
@@ -321,7 +322,12 @@ for GraphicsBackEnd<'a, C> {
         renderer.update_buffer_vec(*buffer_color, colors, 0);
 
         let n = vertices.len() / POS_COMPONENTS;
-        batch.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
+        batch.slice = gfx::Slice {
+                prim_type: gfx::TriangleList,
+                start: 0,
+                end: n as u32,
+                kind: render::mesh::VertexSlice
+            };
         renderer.draw(batch, *frame);
     }
 
@@ -373,7 +379,12 @@ for GraphicsBackEnd<'a, C> {
         renderer.update_buffer_vec(*buffer_uv, texture_coords, 0);
 
         let n = vertices.len() / POS_COMPONENTS;
-        batch_uv.slice = gfx::VertexSlice(gfx::TriangleList, 0, n as u32);
+        batch_uv.slice = gfx::Slice {
+                prim_type: gfx::TriangleList,
+                start: 0,
+                end: n as u32,
+                kind: render::mesh::VertexSlice
+            };
         renderer.draw(batch_uv, *frame);
     }
 }
