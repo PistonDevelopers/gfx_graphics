@@ -175,7 +175,7 @@ impl G2D {
             buffer_uv.raw()
         ).into_iter());
 
-        let batch = gfx::batch::OwnedBatch::new(mesh, program, ()).unwrap();
+        let mut batch = gfx::batch::OwnedBatch::new(mesh, program, ()).unwrap();
 
         let sampler = device.create_sampler(
                 gfx::tex::SamplerInfo::new(gfx::tex::Trilinear,
@@ -200,8 +200,14 @@ impl G2D {
             s_texture: (texture, Some(sampler))
         };
 
-        let batch_uv = gfx::batch::OwnedBatch::new(
+        let mut batch_uv = gfx::batch::OwnedBatch::new(
             mesh_uv, program_uv, params_uv).unwrap();
+        
+        // Disable culling.
+        batch.state.primitive.method = 
+            gfx::state::Fill(gfx::state::CullNothing);
+        batch_uv.state.primitive.method =
+            gfx::state::Fill(gfx::state::CullNothing);
 
         G2D {
             buffer_pos: buffer_pos,
