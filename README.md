@@ -27,3 +27,5 @@ for e in EventIterator::new(&mut window, &event_settings) {
 ### Dependency graph
 
 ![dependencies](./Cargo.png)
+
+[How to contribute](https://github.com/PistonDevelopers/piston/blob/master/CONTRIBUTING.md)
