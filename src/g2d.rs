@@ -1,5 +1,4 @@
 
-use render;
 use gfx;
 use gfx::DeviceHelper;
 use graphics::{ Context, BackEnd };
@@ -205,9 +204,9 @@ impl G2D {
         
         // Disable culling.
         batch.state.primitive.method = 
-            gfx::state::Fill(gfx::state::CullNothing);
+            gfx::state::Fill(gfx::state::CullMode::Nothing);
         batch_uv.state.primitive.method =
-            gfx::state::Fill(gfx::state::CullNothing);
+            gfx::state::Fill(gfx::state::CullMode::Nothing);
 
         G2D {
             buffer_pos: buffer_pos,
@@ -332,7 +331,7 @@ for GraphicsBackEnd<'a, C> {
                 prim_type: gfx::TriangleList,
                 start: 0,
                 end: n as u32,
-                kind: render::mesh::VertexSlice
+                kind: gfx::SliceKind::Vertex
             };
         renderer.draw(batch, *frame);
     }
@@ -389,7 +388,7 @@ for GraphicsBackEnd<'a, C> {
                 prim_type: gfx::TriangleList,
                 start: 0,
                 end: n as u32,
-                kind: render::mesh::VertexSlice
+                kind: gfx::SliceKind::Vertex
             };
         renderer.draw(batch_uv, *frame);
     }
