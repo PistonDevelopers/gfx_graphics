@@ -5,9 +5,7 @@
 
 #[phase(plugin)]
 extern crate gfx_macros;
-extern crate device;
 extern crate gfx;
-extern crate render;
 extern crate graphics;
 extern crate image;
 extern crate gfx_texture;
