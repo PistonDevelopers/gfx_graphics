@@ -9,21 +9,21 @@ use Texture;
 static VERTEX_SHADER: gfx::ShaderSource<'static> = shaders!{
     GLSL_120: b"
 #version 120
+uniform vec4 color;
+
 attribute vec2 pos;
-attribute vec4 color;
-varying vec4 v_Color;
+
 void main() {
-    v_Color = color;
     gl_Position = vec4(pos, 0.0, 1.0);
 }
 "
     GLSL_150: b"
 #version 150 core
+uniform vec4 color;
+
 in vec2 pos;
-in vec4 color;
-out vec4 v_Color;
+
 void main() {
-    v_Color = color;
     gl_Position = vec4(pos, 0.0, 1.0);
 }
 "
@@ -32,17 +32,20 @@ void main() {
 static FRAGMENT_SHADER: gfx::ShaderSource<'static> = shaders!{
     GLSL_120: b"
 #version 120
-varying vec4 v_Color;
+uniform vec4 color;
+
 void main() {
-    gl_FragColor = v_Color;
+    gl_FragColor = color;
 }
 "
     GLSL_150: b"
 #version 150 core
-in vec4 v_Color;
+uniform vec4 color;
+
 out vec4 o_Color;
+
 void main() {
-    o_Color = v_Color;
+    o_Color = color;
 }
 "
 };
@@ -50,29 +53,29 @@ void main() {
 static VERTEX_SHADER_UV: gfx::ShaderSource<'static> = shaders!{
     GLSL_120: b"
 #version 120
-attribute vec2 pos;
-attribute vec4 color;
-attribute vec2 uv;
 uniform sampler2D s_texture;
-varying vec4 v_Color;
+uniform vec4 color;
+
+attribute vec2 pos;
+attribute vec2 uv;
+
 varying vec2 v_UV;
+
 void main() {
     v_UV = uv;
-    v_Color = color;
     gl_Position = vec4(pos, 0.0, 1.0);
 }
 "
     GLSL_150: b"
 #version 150 core
-in vec2 pos;
-in vec4 color;
-in vec2 uv;
 uniform sampler2D s_texture;
-out vec4 v_Color;
+uniform vec4 color;
+
+in vec2 pos;
+in vec2 uv;
 out vec2 v_UV;
 void main() {
     v_UV = uv;
-    v_Color = color;
     gl_Position = vec4(pos, 0.0, 1.0);
 }
 "
@@ -82,28 +85,32 @@ static FRAGMENT_SHADER_UV: gfx::ShaderSource<'static> = shaders!{
     GLSL_120: b"
 #version 120
 uniform sampler2D s_texture;
+uniform vec4 color;
+
 varying vec2 v_UV;
-varying vec4 v_Color;
+
 void main()
 {
-    gl_FragColor = texture2D(s_texture, v_UV) * v_Color;
+    gl_FragColor = texture2D(s_texture, v_UV) * color;
 }
 "
     GLSL_150: b"
 #version 150 core
-out vec4 o_Color;
 uniform sampler2D s_texture;
+uniform vec4 color;
+
+out vec4 o_Color;
+
 in vec2 v_UV;
-in vec4 v_Color;
+
 void main()
 {
-    o_Color = texture(s_texture, v_UV) * v_Color;
+    o_Color = texture(s_texture, v_UV) * color;
 }
 "
 };
 
 static POS_COMPONENTS: uint = 2;
-static COLOR_COMPONENTS: uint = 4;
 static UV_COMPONENTS: uint = 2;
 
 // Boiler plate for automatic attribute construction.
@@ -120,17 +127,23 @@ struct ColorFormat { color: [f32, ..4] }
 struct TexCoordsFormat { uv: [f32, ..2] }
 
 #[allow(unused_imports)]
+#[shader_param(Batch, OwnedBatch)]
+struct Params {
+    color: [f32, ..4],
+}
+
+#[allow(unused_imports)]
 #[shader_param(BatchUV, OwnedBatchUV)]
 struct ParamsUV {
+    color: [f32, ..4],
     s_texture: gfx::shade::TextureParam,
 }
 
 /// The graphics back-end.
 pub struct G2D {
     buffer_pos: gfx::BufferHandle<f32>,
-    buffer_color: gfx::BufferHandle<f32>,
     buffer_uv: gfx::BufferHandle<f32>,
-    batch: gfx::batch::OwnedBatch<(), ()>,
+    batch: OwnedBatch,
     batch_uv: OwnedBatchUV,
 }
 
@@ -150,9 +163,6 @@ impl G2D {
         let buffer_pos = device.create_buffer(
             POS_COMPONENTS * BUFFER_SIZE,
             gfx::UsageDynamic);
-        let buffer_color = device.create_buffer(
-            COLOR_COMPONENTS * BUFFER_SIZE,
-            gfx::UsageDynamic);
         let buffer_uv = device.create_buffer(
             UV_COMPONENTS * BUFFER_SIZE,
             gfx::UsageDynamic);
@@ -162,10 +172,6 @@ impl G2D {
             None::<PositionFormat>,
             buffer_pos.raw()
         ).into_iter());
-        mesh.attributes.extend(gfx::VertexFormat::generate(
-            None::<ColorFormat>,
-            buffer_color.raw()
-        ).into_iter());
 
         // Reuse parameters from `mesh`.
         let mut mesh_uv = mesh.clone();
@@ -174,7 +180,10 @@ impl G2D {
             buffer_uv.raw()
         ).into_iter());
 
-        let mut batch = gfx::batch::OwnedBatch::new(mesh, program, ()).unwrap();
+        let params = Params {
+                color: [1.0, ..4],
+            };
+        let mut batch = gfx::batch::OwnedBatch::new(mesh, program, params).unwrap();
 
         let sampler = device.create_sampler(
                 gfx::tex::SamplerInfo::new(gfx::tex::Trilinear,
@@ -196,9 +205,9 @@ impl G2D {
                 &[0x20u8, 0xA0u8, 0xC0u8, 0x00u8])
             .unwrap();
         let params_uv = ParamsUV {
+            color: [1.0, ..4],
             s_texture: (texture, Some(sampler))
         };
-
         let mut batch_uv = gfx::batch::OwnedBatch::new(
             mesh_uv, program_uv, params_uv).unwrap();
         
@@ -210,7 +219,6 @@ impl G2D {
 
         G2D {
             buffer_pos: buffer_pos,
-            buffer_color: buffer_color,
             buffer_uv: buffer_uv,
             batch: batch,
             batch_uv: batch_uv,
@@ -259,9 +267,7 @@ impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
 
 impl<'a, C: gfx::CommandBuffer> BackEnd<Texture>
 for GraphicsBackEnd<'a, C> {
-    fn supports_clear_rgba(&self) -> bool { true }
-
-    fn clear_rgba(&mut self, r: f32, g: f32, b: f32, a: f32) {
+    fn clear(&mut self, color: [f32, ..4]) {
         let &GraphicsBackEnd {
             ref mut renderer,
             frame,
@@ -269,7 +275,7 @@ for GraphicsBackEnd<'a, C> {
         } = self;
         renderer.clear(
                 gfx::ClearData {
-                    color: [r, g, b, a],
+                    color: color,
                     depth: 0.0,
                     stencil: 0,
                 },
@@ -301,30 +307,23 @@ for GraphicsBackEnd<'a, C> {
         self.g2d.batch_uv.state.blend = None;
     }
 
-    fn supports_tri_list_xy_f32_rgba_f32(&self) -> bool { true }
+    fn color(&mut self, color: [f32, ..4]) {
+        self.g2d.batch.param.color = color;
+        self.g2d.batch_uv.param.color = color;
+    }
 
-    fn tri_list_xy_f32_rgba_f32(
-        &mut self,
-        vertices: &[f32],
-        colors: &[f32]
-    ) {
+    fn tri_list(&mut self, vertices: &[f32]) {
         let &GraphicsBackEnd {
             ref mut renderer,
             ref frame,
             g2d: &G2D {
                 ref mut buffer_pos,
-                ref mut buffer_color,
                 ref mut batch,
                 ..
             },
         } = self;
 
-        assert_eq!(
-            vertices.len() * COLOR_COMPONENTS,
-            colors.len() * POS_COMPONENTS
-        );
         renderer.update_buffer_vec(*buffer_pos, vertices, 0);
-        renderer.update_buffer_vec(*buffer_color, colors, 0);
 
         let n = vertices.len() / POS_COMPONENTS;
         batch.slice = gfx::Slice {
@@ -336,35 +335,25 @@ for GraphicsBackEnd<'a, C> {
         renderer.draw(batch, *frame);
     }
 
-    fn supports_single_texture(&self) -> bool { true }
-
-    fn enable_single_texture(&mut self, texture: &Texture) {
-        let ParamsUV {
-            s_texture: (ref mut s_texture, _)
+    fn enable_texture(&mut self, texture: &Texture) {
+        let ParamsUV { 
+            s_texture: (ref mut s_texture, _), .. 
         } = self.g2d.batch_uv.param;
         *s_texture = texture.handle;
     }
 
-    fn disable_single_texture(&mut self) {}
+    fn disable_texture(&mut self) {}
 
     fn has_texture_alpha(&self, texture: &Texture) -> bool {
         texture.handle.get_info().format.get_components() == Some(gfx::tex::RGBA)
     }
 
-    fn supports_tri_list_xy_f32_rgba_f32_uv_f32(&self) -> bool { true }
-
-    fn tri_list_xy_f32_rgba_f32_uv_f32(
-        &mut self,
-        vertices: &[f32],
-        colors: &[f32],
-        texture_coords: &[f32]
-    ) {
+    fn tri_list_uv(&mut self, vertices: &[f32], texture_coords: &[f32]) {
         let &GraphicsBackEnd {
             ref mut renderer,
             ref frame,
             g2d: &G2D {
                 ref mut buffer_pos,
-                ref mut buffer_color,
                 ref mut buffer_uv,
                 ref mut batch_uv,
                 ..
@@ -372,15 +361,10 @@ for GraphicsBackEnd<'a, C> {
         } = self;
 
         assert_eq!(
-            vertices.len() * COLOR_COMPONENTS,
-            colors.len() * POS_COMPONENTS
-        );
-        assert_eq!(
             vertices.len() * UV_COMPONENTS,
             texture_coords.len() * POS_COMPONENTS
         );
         renderer.update_buffer_vec(*buffer_pos, vertices, 0);
-        renderer.update_buffer_vec(*buffer_color, colors, 0);
         renderer.update_buffer_vec(*buffer_uv, texture_coords, 0);
 
         let n = vertices.len() / POS_COMPONENTS;
