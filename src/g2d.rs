@@ -263,6 +263,36 @@ impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
             g2d: g2d,
         }
     }
+    
+    /// Returns true if texture has alpha channel.
+    pub fn has_texture_alpha(&self, texture: &Texture) -> bool {
+        texture.handle.get_info().format.get_components() == Some(gfx::tex::RGBA)
+    }
+    
+    /// Enabled alpha blending.
+    pub fn enable_alpha_blend(&mut self) {
+        use std::default::Default;
+        use gfx::state::{Normal, Inverse, Factor};
+
+        let blend = gfx::state::Blend {
+            value: [1.0, 1.0, 1.0, 1.0],
+            color: gfx::state::BlendChannel {
+                    equation: gfx::state::FuncAdd,
+                    source: Factor(Normal, gfx::state::SourceAlpha),
+                    destination: Factor(Inverse, gfx::state::SourceAlpha)
+                },
+            alpha: Default::default()
+        };
+
+        self.g2d.batch.state.blend = Some(blend);
+        self.g2d.batch_uv.state.blend = Some(blend);
+    }
+
+    /// Disables alpha blending.
+    pub fn disable_alpha_blend(&mut self) {
+        self.g2d.batch.state.blend = None;
+        self.g2d.batch_uv.state.blend = None;
+    }
 }
 
 impl<'a, C: gfx::CommandBuffer> BackEnd<Texture>
@@ -282,29 +312,6 @@ for GraphicsBackEnd<'a, C> {
                 gfx::COLOR,
                 frame
             );
-    }
-
-    fn enable_alpha_blend(&mut self) {
-        use std::default::Default;
-        use gfx::state::{Normal, Inverse, Factor};
-
-        let blend = gfx::state::Blend {
-            value: [1.0, 1.0, 1.0, 1.0],
-            color: gfx::state::BlendChannel {
-                    equation: gfx::state::FuncAdd,
-                    source: Factor(Normal, gfx::state::SourceAlpha),
-                    destination: Factor(Inverse, gfx::state::SourceAlpha)
-                },
-            alpha: Default::default()
-        };
-
-        self.g2d.batch.state.blend = Some(blend);
-        self.g2d.batch_uv.state.blend = Some(blend);
-    }
-
-    fn disable_alpha_blend(&mut self) {
-        self.g2d.batch.state.blend = None;
-        self.g2d.batch_uv.state.blend = None;
     }
 
     fn color(&mut self, color: [f32, ..4]) {
@@ -343,10 +350,6 @@ for GraphicsBackEnd<'a, C> {
     }
 
     fn disable_texture(&mut self) {}
-
-    fn has_texture_alpha(&self, texture: &Texture) -> bool {
-        texture.handle.get_info().format.get_components() == Some(gfx::tex::RGBA)
-    }
 
     fn tri_list_uv(&mut self, vertices: &[f32], texture_coords: &[f32]) {
         let &GraphicsBackEnd {
