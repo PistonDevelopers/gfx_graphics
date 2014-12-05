@@ -21,7 +21,7 @@ use gfx_graphics::{
 use sdl2_window::Sdl2Window;
 
 fn main() {
-    let opengl = shader_version::opengl::OpenGL_3_2;
+    let opengl = shader_version::opengl::OpenGL::OpenGL_3_2;
     let window = Sdl2Window::new(
         opengl,
         WindowSettings {
@@ -47,12 +47,19 @@ fn main() {
     for e in Events::new(&window) {
         use event::RenderEvent;
         e.render(|_| {
+            use graphics::RelativeTransform;
+
             g2d.draw(&mut renderer, &frame, |c, g| {
-                use graphics::*;
-                c.rgb(1.0, 1.0, 1.0).draw(g);
-                c.rect(0.0, 0.0, 100.0, 100.0).rgb(1.0, 0.0, 0.0).draw(g);
-                c.rect(50.0, 50.0, 100.0, 100.0).rgba(0.0, 1.0, 0.0, 0.3).draw(g);
-                c.trans(100.0, 100.0).image(&image).draw(g);
+                graphics::clear([1.0, ..4], g);        
+                graphics::Rectangle::new([1.0, 0.0, 0.0, 1.0])
+                    .draw([0.0, 0.0, 100.0, 100.0], &c, g);
+                graphics::Rectangle::new([0.0, 1.0, 0.0, 0.3])
+                    .draw(
+                        [50.0, 50.0, 100.0, 100.0], 
+                        &c, 
+                        g
+                    );
+                graphics::image(&image, &c.trans(100.0, 100.0), g);
             });
 
             device.submit(renderer.as_buffer());
