@@ -186,8 +186,8 @@ impl G2D {
         let mut batch = gfx::batch::OwnedBatch::new(mesh, program, params).unwrap();
 
         let sampler = device.create_sampler(
-                gfx::tex::SamplerInfo::new(gfx::tex::Trilinear,
-                                           gfx::tex::Clamp)
+                gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Trilinear,
+                                           gfx::tex::WrapMode::Clamp)
             );
 
         // Create a dummy texture
@@ -196,7 +196,7 @@ impl G2D {
             height: 1,
             depth: 1,
             levels: 1,
-            kind: gfx::tex::Texture2D,
+            kind: gfx::tex::TextureKind::Texture2D,
             format: gfx::tex::RGBA8,
         };
         let image_info = texture_info.to_image_info();
@@ -213,9 +213,9 @@ impl G2D {
         
         // Disable culling.
         batch.state.primitive.method = 
-            gfx::state::Fill(gfx::state::CullMode::Nothing);
+            gfx::state::RasterMethod::Fill(gfx::state::CullMode::Nothing);
         batch_uv.state.primitive.method =
-            gfx::state::Fill(gfx::state::CullMode::Nothing);
+            gfx::state::RasterMethod::Fill(gfx::state::CullMode::Nothing);
 
         G2D {
             buffer_pos: buffer_pos,
@@ -266,20 +266,21 @@ impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
     
     /// Returns true if texture has alpha channel.
     pub fn has_texture_alpha(&self, texture: &Texture) -> bool {
-        texture.handle.get_info().format.get_components() == Some(gfx::tex::RGBA)
+        texture.handle.get_info().format.get_components() == Some(gfx::tex::Components::RGBA)
     }
     
     /// Enabled alpha blending.
     pub fn enable_alpha_blend(&mut self) {
         use std::default::Default;
-        use gfx::state::{Normal, Inverse, Factor};
+        use gfx::state::InverseFlag::{Normal, Inverse};
+        use gfx::state::BlendValue::SourceAlpha;
 
         let blend = gfx::state::Blend {
             value: [1.0, 1.0, 1.0, 1.0],
             color: gfx::state::BlendChannel {
-                    equation: gfx::state::FuncAdd,
-                    source: Factor(Normal, gfx::state::SourceAlpha),
-                    destination: Factor(Inverse, gfx::state::SourceAlpha)
+                    equation: gfx::state::Equation::Add,
+                    source: gfx::state::Factor(Normal, SourceAlpha),
+                    destination: gfx::state::Factor(Inverse, SourceAlpha)
                 },
             alpha: Default::default()
         };
@@ -334,7 +335,7 @@ for GraphicsBackEnd<'a, C> {
 
         let n = vertices.len() / POS_COMPONENTS;
         batch.slice = gfx::Slice {
-                prim_type: gfx::TriangleList,
+                prim_type: gfx::PrimitiveType::TriangleList,
                 start: 0,
                 end: n as u32,
                 kind: gfx::SliceKind::Vertex
@@ -372,7 +373,7 @@ for GraphicsBackEnd<'a, C> {
 
         let n = vertices.len() / POS_COMPONENTS;
         batch_uv.slice = gfx::Slice {
-                prim_type: gfx::TriangleList,
+                prim_type: gfx::PrimitiveType::TriangleList,
                 start: 0,
                 end: n as u32,
                 kind: gfx::SliceKind::Vertex
