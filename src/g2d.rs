@@ -241,7 +241,9 @@ impl G2D {
             frame.width as f64,
             frame.height as f64
         );
+        g.enable_alpha_blend();
         f(c, g);
+        g.disable_alpha_blend();
     }
 }
 
