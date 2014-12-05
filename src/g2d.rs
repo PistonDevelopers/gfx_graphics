@@ -162,10 +162,10 @@ impl G2D {
 
         let buffer_pos = device.create_buffer(
             POS_COMPONENTS * BUFFER_SIZE,
-            gfx::UsageDynamic);
+            gfx::BufferUsage::Dynamic);
         let buffer_uv = device.create_buffer(
             UV_COMPONENTS * BUFFER_SIZE,
-            gfx::UsageDynamic);
+            gfx::BufferUsage::Dynamic);
 
         let mut mesh = gfx::Mesh::new(BUFFER_SIZE as u32);
         mesh.attributes.extend(gfx::VertexFormat::generate(
