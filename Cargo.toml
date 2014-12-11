@@ -1,14 +1,31 @@
 [package]
 
-name = "gfx_graphics"
+name = "piston2d-gfx_graphics"
 version = "0.0.0"
 authors = ["bvssvni <bvssvni@gmail.com>"]
-tags = []
+tags = ["graphics", "2d", "gfx"]
+description = "A Gfx 2D back-end for the Piston game engine"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/PistonDevelopers/gfx_graphics.git"
+homepage = "https://github.com/PistonDevelopers/gfx_graphics"
 
 [lib]
 
 name = "gfx_graphics"
 path = "src/lib.rs"
+
+[dependencies.piston2d-graphics]
+
+git = "https://github.com/pistondevelopers/graphics"
+
+[dependencies.piston-gfx_texture]
+
+git = "https://github.com/pistondevelopers/gfx_texture"
+
+[dependencies.image]
+
+git = "https://github.com/pistondevelopers/image"
 
 [dependencies.gfx]
 
@@ -18,14 +35,3 @@ git = "https://github.com/gfx-rs/gfx-rs"
 
 git = "https://github.com/gfx-rs/gfx-rs"
 
-[dependencies.graphics]
-
-git = "https://github.com/pistondevelopers/graphics"
-
-[dependencies.gfx_texture]
-
-git = "https://github.com/pistondevelopers/gfx_texture"
-
-[dependencies.image]
-
-git = "https://github.com/pistondevelopers/image"
