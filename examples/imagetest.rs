@@ -41,7 +41,7 @@ fn main() {
     let mut renderer = device.create_renderer();
 
     let image = Texture::from_path(&mut device, 
-        &Path::new("rust.png")).unwrap();
+        &Path::new("./assets/rust.png")).unwrap();
     let mut g2d = G2D::new(&mut device);
     let window = RefCell::new(window);
     for e in Events::new(&window) {
