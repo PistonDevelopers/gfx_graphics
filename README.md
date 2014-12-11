@@ -2,6 +2,8 @@
 
 The implementation of a piston-graphics back-end using Gfx.
 
+To run example, type `cargo run --example imagetest`.
+
 This is how it looks like:
 
 ```Rust
