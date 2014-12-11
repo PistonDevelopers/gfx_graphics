@@ -20,9 +20,6 @@ script:
     - cargo build -v
     - cargo test -v
     - cargo doc -v
-    - cd examples/imagetest/
-    - cargo build -v
-    - cargo doc -v
 after_success:
     - cp -R target/doc doc
     - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
