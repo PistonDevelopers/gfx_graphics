@@ -15,17 +15,14 @@ homepage = "https://github.com/PistonDevelopers/gfx_graphics"
 name = "gfx_graphics"
 path = "src/lib.rs"
 
-[dependencies.piston2d-graphics]
+[dependencies]
 
-git = "https://github.com/pistondevelopers/graphics"
+piston2d-graphics = "0.0.0"
+image = "~0.2.0"
 
 [dependencies.piston-gfx_texture]
 
 git = "https://github.com/pistondevelopers/gfx_texture"
-
-[dependencies.image]
-
-git = "https://github.com/pistondevelopers/image"
 
 [dependencies.gfx]
 
