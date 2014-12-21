@@ -2,6 +2,8 @@
 
 The implementation of a piston-graphics back-end using Gfx.
 
+To run example, type `cargo run --example imagetest`.
+
 This is how it looks like:
 
 ```Rust
@@ -27,3 +29,5 @@ for e in EventIterator::new(&mut window, &event_settings) {
 ### Dependency graph
 
 ![dependencies](./Cargo.png)
+
+[How to contribute](https://github.com/PistonDevelopers/piston/blob/master/CONTRIBUTING.md)
