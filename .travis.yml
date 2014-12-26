@@ -13,9 +13,6 @@ install:
     - curl -O http://www.libsdl.org/release/SDL2-2.0.0.tar.gz
     - tar -xzvf SDL2-2.0.0.tar.gz
     - (cd SDL2-2.0.0 && ./configure && make && sudo make install)
-before_script:
-    - rustc -v
-    - cargo -V
 script:
     - cargo build -v
     - cargo test -v
