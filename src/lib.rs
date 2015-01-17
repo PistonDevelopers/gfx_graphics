@@ -1,7 +1,9 @@
 #![deny(missing_docs)]
+#![feature(plugin)]
 
 //! The implementation of a Rust-Graphics back-end using gfx-rs.
 
+#[plugin]
 #[macro_use]
 extern crate gfx_macros;
 extern crate gfx;

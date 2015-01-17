@@ -1,7 +1,5 @@
 
-#![feature(globs)]
-
-extern crate current;
+extern crate quack;
 extern crate shader_version;
 extern crate graphics;
 extern crate event;
@@ -10,9 +8,8 @@ extern crate gfx;
 extern crate gfx_graphics;
 extern crate sdl2;
 
-use current::{ Get };
+use quack::{ Get };
 use std::cell::RefCell;
-use event::{ Events, WindowSettings };
 use gfx::{Device, DeviceHelper};
 use gfx_graphics::{
     G2D,
@@ -24,7 +21,7 @@ fn main() {
     let opengl = shader_version::OpenGL::_3_2;
     let window = Sdl2Window::new(
         opengl,
-        WindowSettings {
+        event::WindowSettings {
             title: "gfx_graphics: imagetest".to_string(),
             size: [300, 300],
             fullscreen: false,
@@ -44,13 +41,13 @@ fn main() {
         &Path::new("./assets/rust.png")).unwrap();
     let mut g2d = G2D::new(&mut device);
     let window = RefCell::new(window);
-    for e in Events::new(&window) {
+    for e in event::events(&window) {
         use event::RenderEvent;
-        e.render(|_| {
+        if let Some(_) = e.render_args() {
             use graphics::RelativeTransform;
 
             g2d.draw(&mut renderer, &frame, |c, g| {
-                graphics::clear([1.0, ..4], g);        
+                graphics::clear([1.0; 4], g);        
                 graphics::Rectangle::new([1.0, 0.0, 0.0, 1.0])
                     .draw([0.0, 0.0, 100.0, 100.0], &c, g);
                 graphics::Rectangle::new([0.0, 1.0, 0.0, 0.3])
@@ -64,6 +61,6 @@ fn main() {
 
             device.submit(renderer.as_buffer());
             renderer.reset();
-       });
+       }
     }
 }

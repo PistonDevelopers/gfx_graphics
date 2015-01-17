@@ -126,13 +126,11 @@ struct ColorFormat { color: [f32; 4] }
 #[vertex_format]
 struct TexCoordsFormat { uv: [f32; 2] }
 
-#[allow(unused_imports)]
 #[shader_param(Batch, OwnedBatch)]
 struct Params {
     color: [f32; 4],
 }
 
-#[allow(unused_imports)]
 #[shader_param(BatchUV, OwnedBatchUV)]
 struct ParamsUV {
     color: [f32; 4],
@@ -181,7 +179,7 @@ impl G2D {
         ).into_iter());
 
         let params = Params {
-                color: [1.0, ..4],
+                color: [1.0; 4],
             };
         let mut batch = gfx::batch::OwnedBatch::new(mesh, program, params).unwrap();
 
@@ -205,7 +203,7 @@ impl G2D {
                 &[0x20u8, 0xA0u8, 0xC0u8, 0x00u8])
             .unwrap();
         let params_uv = ParamsUV {
-            color: [1.0, ..4],
+            color: [1.0; 4],
             s_texture: (texture, Some(sampler))
         };
         let mut batch_uv = gfx::batch::OwnedBatch::new(
@@ -230,7 +228,7 @@ impl G2D {
         &mut self,
         renderer: &mut gfx::Renderer<C>,
         frame: &gfx::Frame,
-        f: F
+        mut f: F
     )
         where
             C: gfx::CommandBuffer,
@@ -308,7 +306,7 @@ impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
 impl<'a, C: gfx::CommandBuffer> BackEnd<Texture>
 for GraphicsBackEnd<'a, C> {
     fn clear(&mut self, color: [f32; 4]) {
-        let &GraphicsBackEnd {
+        let &mut GraphicsBackEnd {
             ref mut renderer,
             frame,
             ..
@@ -330,10 +328,10 @@ for GraphicsBackEnd<'a, C> {
     }
 
     fn tri_list(&mut self, vertices: &[f32]) {
-        let &GraphicsBackEnd {
+        let &mut GraphicsBackEnd {
             ref mut renderer,
             ref frame,
-            g2d: &G2D {
+            g2d: &mut G2D {
                 ref mut buffer_pos,
                 ref mut batch,
                 ..
@@ -362,10 +360,10 @@ for GraphicsBackEnd<'a, C> {
     fn disable_texture(&mut self) {}
 
     fn tri_list_uv(&mut self, vertices: &[f32], texture_coords: &[f32]) {
-        let &GraphicsBackEnd {
+        let &mut GraphicsBackEnd {
             ref mut renderer,
             ref frame,
-            g2d: &G2D {
+            g2d: &mut G2D {
                 ref mut buffer_pos,
                 ref mut buffer_uv,
                 ref mut batch_uv,
