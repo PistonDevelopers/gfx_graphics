@@ -1,9 +1,8 @@
 #![deny(missing_docs)]
-#![feature(phase)]
 
 //! The implementation of a Rust-Graphics back-end using gfx-rs.
 
-#[phase(plugin)]
+#[macro_use]
 extern crate gfx_macros;
 extern crate gfx;
 extern crate graphics;

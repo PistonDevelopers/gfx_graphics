@@ -7,7 +7,7 @@ use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use Texture;
 
 static VERTEX_SHADER: gfx::ShaderSource<'static> = shaders!{
-    GLSL_120: b"
+glsl_120: b"
 #version 120
 uniform vec4 color;
 
@@ -16,8 +16,8 @@ attribute vec2 pos;
 void main() {
     gl_Position = vec4(pos, 0.0, 1.0);
 }
-"
-    GLSL_150: b"
+",
+glsl_150: b"
 #version 150 core
 uniform vec4 color;
 
@@ -30,15 +30,15 @@ void main() {
 };
 
 static FRAGMENT_SHADER: gfx::ShaderSource<'static> = shaders!{
-    GLSL_120: b"
+glsl_120: b"
 #version 120
 uniform vec4 color;
 
 void main() {
     gl_FragColor = color;
 }
-"
-    GLSL_150: b"
+",
+glsl_150: b"
 #version 150 core
 uniform vec4 color;
 
@@ -51,7 +51,7 @@ void main() {
 };
 
 static VERTEX_SHADER_UV: gfx::ShaderSource<'static> = shaders!{
-    GLSL_120: b"
+glsl_120: b"
 #version 120
 uniform sampler2D s_texture;
 uniform vec4 color;
@@ -65,8 +65,8 @@ void main() {
     v_UV = uv;
     gl_Position = vec4(pos, 0.0, 1.0);
 }
-"
-    GLSL_150: b"
+",
+glsl_150: b"
 #version 150 core
 uniform sampler2D s_texture;
 uniform vec4 color;
@@ -82,7 +82,7 @@ void main() {
 };
 
 static FRAGMENT_SHADER_UV: gfx::ShaderSource<'static> = shaders!{
-    GLSL_120: b"
+glsl_120: b"
 #version 120
 uniform sampler2D s_texture;
 uniform vec4 color;
@@ -93,8 +93,8 @@ void main()
 {
     gl_FragColor = texture2D(s_texture, v_UV) * color;
 }
-"
-    GLSL_150: b"
+",
+glsl_150: b"
 #version 150 core
 uniform sampler2D s_texture;
 uniform vec4 color;
@@ -110,32 +110,32 @@ void main()
 "
 };
 
-static POS_COMPONENTS: uint = 2;
-static UV_COMPONENTS: uint = 2;
+static POS_COMPONENTS: usize = 2;
+static UV_COMPONENTS: usize = 2;
 
 // Boiler plate for automatic attribute construction.
 // Needs to be improved on gfx-rs side.
 // For some reason, using ``*_COMPONENT` triggers some macros errors.
 
 #[vertex_format]
-struct PositionFormat { pos: [f32, ..2] }
+struct PositionFormat { pos: [f32; 2] }
 
 #[vertex_format]
-struct ColorFormat { color: [f32, ..4] }
+struct ColorFormat { color: [f32; 4] }
 
 #[vertex_format]
-struct TexCoordsFormat { uv: [f32, ..2] }
+struct TexCoordsFormat { uv: [f32; 2] }
 
 #[allow(unused_imports)]
 #[shader_param(Batch, OwnedBatch)]
 struct Params {
-    color: [f32, ..4],
+    color: [f32; 4],
 }
 
 #[allow(unused_imports)]
 #[shader_param(BatchUV, OwnedBatchUV)]
 struct ParamsUV {
-    color: [f32, ..4],
+    color: [f32; 4],
     s_texture: gfx::shade::TextureParam,
 }
 
@@ -210,9 +210,9 @@ impl G2D {
         };
         let mut batch_uv = gfx::batch::OwnedBatch::new(
             mesh_uv, program_uv, params_uv).unwrap();
-        
+
         // Disable culling.
-        batch.state.primitive.method = 
+        batch.state.primitive.method =
             gfx::state::RasterMethod::Fill(gfx::state::CullMode::Nothing);
         batch_uv.state.primitive.method =
             gfx::state::RasterMethod::Fill(gfx::state::CullMode::Nothing);
@@ -226,15 +226,19 @@ impl G2D {
     }
 
     /// Renders graphics to a Gfx renderer.
-    pub fn draw<C: gfx::CommandBuffer>(
+    pub fn draw<C, F>(
         &mut self,
         renderer: &mut gfx::Renderer<C>,
         frame: &gfx::Frame,
-        f: |c: Context, g: &mut GraphicsBackEnd<C>|
-    ) {
+        f: F
+    )
+        where
+            C: gfx::CommandBuffer,
+            F: FnMut(Context, &mut GraphicsBackEnd<C>)
+    {
         let ref mut g = GraphicsBackEnd::new(
-            renderer, 
-            frame, 
+            renderer,
+            frame,
             self
         );
         let c = Context::abs(
@@ -265,14 +269,14 @@ impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
             g2d: g2d,
         }
     }
-    
+
     /// Returns true if texture has alpha channel.
     pub fn has_texture_alpha(&self, texture: &Texture) -> bool {
         use gfx::tex::Components::RGBA;
 
         texture.handle.get_info().format.get_components() == Some(RGBA)
     }
-    
+
     /// Enabled alpha blending.
     pub fn enable_alpha_blend(&mut self) {
         use std::default::Default;
@@ -303,7 +307,7 @@ impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
 
 impl<'a, C: gfx::CommandBuffer> BackEnd<Texture>
 for GraphicsBackEnd<'a, C> {
-    fn clear(&mut self, color: [f32, ..4]) {
+    fn clear(&mut self, color: [f32; 4]) {
         let &GraphicsBackEnd {
             ref mut renderer,
             frame,
@@ -320,7 +324,7 @@ for GraphicsBackEnd<'a, C> {
             );
     }
 
-    fn color(&mut self, color: [f32, ..4]) {
+    fn color(&mut self, color: [f32; 4]) {
         self.g2d.batch.param.color = color;
         self.g2d.batch_uv.param.color = color;
     }
@@ -349,8 +353,8 @@ for GraphicsBackEnd<'a, C> {
     }
 
     fn enable_texture(&mut self, texture: &Texture) {
-        let ParamsUV { 
-            s_texture: (ref mut s_texture, _), .. 
+        let ParamsUV {
+            s_texture: (ref mut s_texture, _), ..
         } = self.g2d.batch_uv.param;
         *s_texture = texture.handle;
     }
