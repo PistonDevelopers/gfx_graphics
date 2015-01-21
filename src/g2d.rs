@@ -303,8 +303,10 @@ impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
     }
 }
 
-impl<'a, C: gfx::CommandBuffer> BackEnd<Texture>
+impl<'a, C: gfx::CommandBuffer> BackEnd
 for GraphicsBackEnd<'a, C> {
+    type Texture = Texture;
+
     fn clear(&mut self, color: [f32; 4]) {
         let &mut GraphicsBackEnd {
             ref mut renderer,
