@@ -147,16 +147,15 @@ pub struct G2D {
 
 impl G2D {
     /// Creates a new G2D object.
-    pub fn new<D: gfx::Device<C>,
-               C: gfx::CommandBuffer>(device: &mut D) -> G2D {
+    pub fn new<D: gfx::Device>(device: &mut D) -> G2D {
         let program = device.link_program(
                 VERTEX_SHADER.clone(),
                 FRAGMENT_SHADER.clone()
-            ).unwrap();
+            ).ok().expect("Could not link `VERTEX_SHADER` and `FRAGMENT_SHADER`");
         let program_uv = device.link_program(
                 VERTEX_SHADER_UV.clone(),
                 FRAGMENT_SHADER_UV.clone()
-            ).unwrap();
+            ).ok().expect("Could not link `VERTEX_SHADER_UV` and `FRAGMENT_SHADER_UV`");
 
         let buffer_pos = device.create_buffer(
             POS_COMPONENTS * BUFFER_SIZE,
@@ -181,7 +180,8 @@ impl G2D {
         let params = Params {
                 color: [1.0; 4],
             };
-        let mut batch = gfx::batch::OwnedBatch::new(mesh, program, params).unwrap();
+        let mut batch = gfx::batch::OwnedBatch::new(mesh, program, params)
+            .ok().expect("Could not create `OwnedBatch` for `batch`");
 
         let sampler = device.create_sampler(
                 gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Trilinear,
@@ -198,16 +198,18 @@ impl G2D {
             format: gfx::tex::RGBA8,
         };
         let image_info = texture_info.to_image_info();
-        let texture = device.create_texture(texture_info).unwrap();
+        let texture = device.create_texture(texture_info)
+            .ok().expect("Could not create texture");
         device.update_texture(&texture, &image_info,
                 &[0x20u8, 0xA0u8, 0xC0u8, 0x00u8])
-            .unwrap();
+            .ok().expect("Could not update texture");
         let params_uv = ParamsUV {
             color: [1.0; 4],
             s_texture: (texture, Some(sampler))
         };
         let mut batch_uv = gfx::batch::OwnedBatch::new(
-            mesh_uv, program_uv, params_uv).unwrap();
+            mesh_uv, program_uv, params_uv)
+                .ok().expect("Could not created `OwnedBatch` for `batch_uv`");
 
         // Disable culling.
         batch.state.primitive.method =
