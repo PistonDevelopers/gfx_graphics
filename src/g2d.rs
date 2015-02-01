@@ -126,12 +126,12 @@ struct ColorFormat { color: [f32; 4] }
 #[vertex_format]
 struct TexCoordsFormat { uv: [f32; 2] }
 
-#[shader_param(Batch, OwnedBatch)]
+#[shader_param]
 struct Params {
     color: [f32; 4],
 }
 
-#[shader_param(BatchUV, OwnedBatchUV)]
+#[shader_param]
 struct ParamsUV {
     color: [f32; 4],
     s_texture: gfx::shade::TextureParam,
@@ -141,8 +141,8 @@ struct ParamsUV {
 pub struct G2D {
     buffer_pos: gfx::BufferHandle<f32>,
     buffer_uv: gfx::BufferHandle<f32>,
-    batch: OwnedBatch,
-    batch_uv: OwnedBatchUV,
+    batch: gfx::batch::OwnedBatch<Params>,
+    batch_uv: gfx::batch::OwnedBatch<ParamsUV>,
 }
 
 impl G2D {
