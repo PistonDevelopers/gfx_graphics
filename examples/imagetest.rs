@@ -1,14 +1,13 @@
 
-extern crate quack;
+extern crate piston;
 extern crate shader_version;
 extern crate graphics;
-extern crate event;
 extern crate sdl2_window;
 extern crate gfx;
 extern crate gfx_graphics;
 extern crate sdl2;
 
-use quack::{ Get };
+use piston::quack::Get;
 use std::cell::RefCell;
 use gfx::{Device, DeviceHelper};
 use gfx_graphics::{
@@ -21,7 +20,7 @@ fn main() {
     let opengl = shader_version::OpenGL::_3_2;
     let window = Sdl2Window::new(
         opengl,
-        event::WindowSettings {
+        piston::window::WindowSettings {
             title: "gfx_graphics: imagetest".to_string(),
             size: [300, 300],
             fullscreen: false,
@@ -33,7 +32,7 @@ fn main() {
     let mut device = gfx::GlDevice::new(|s| unsafe {
         std::mem::transmute(sdl2::video::gl_get_proc_address(s))
     });
-    let event::window::Size([w, h]) = window.get();
+    let piston::window::Size([w, h]) = window.get();
     let frame = gfx::Frame::new(w as u16, h as u16);
     let mut renderer = device.create_renderer();
 
@@ -41,8 +40,8 @@ fn main() {
         &Path::new("./assets/rust.png")).unwrap();
     let mut g2d = G2D::new(&mut device);
     let window = RefCell::new(window);
-    for e in event::events(&window) {
-        use event::RenderEvent;
+    for e in piston::events(&window) {
+        use piston::event::RenderEvent;
         if let Some(_) = e.render_args() {
             use graphics::RelativeTransform;
 
