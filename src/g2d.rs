@@ -326,12 +326,9 @@ for GraphicsBackEnd<'a, C> {
             );
     }
 
-    fn color(&mut self, color: [f32; 4]) {
-        self.g2d.batch.param.color = color;
-        self.g2d.batch_uv.param.color = color;
-    }
-
-    fn tri_list(&mut self, vertices: &[f32]) {
+    fn tri_list<F>(&mut self, color: &[f32; 4], mut f: F)
+        where F: FnMut(&mut FnMut(&[f32]))
+    {
         let &mut GraphicsBackEnd {
             ref mut renderer,
             ref frame,
@@ -342,28 +339,25 @@ for GraphicsBackEnd<'a, C> {
             },
         } = self;
 
-        renderer.update_buffer_vec(*buffer_pos, vertices, 0);
+        batch.param.color = *color;
 
-        let n = vertices.len() / POS_COMPONENTS;
-        batch.slice = gfx::Slice {
-                prim_type: gfx::PrimitiveType::TriangleList,
-                start: 0,
-                end: n as u32,
-                kind: gfx::SliceKind::Vertex
-            };
-        renderer.draw(batch, *frame);
+        f(&mut |vertices: &[f32]| {
+            renderer.update_buffer_vec(*buffer_pos, vertices, 0);
+
+            let n = vertices.len() / POS_COMPONENTS;
+            batch.slice = gfx::Slice {
+                    prim_type: gfx::PrimitiveType::TriangleList,
+                    start: 0,
+                    end: n as u32,
+                    kind: gfx::SliceKind::Vertex
+                };
+            let _ = renderer.draw(batch, *frame);
+        })
     }
 
-    fn enable_texture(&mut self, texture: &Texture) {
-        let ParamsUV {
-            s_texture: (ref mut s_texture, _), ..
-        } = self.g2d.batch_uv.param;
-        *s_texture = texture.handle;
-    }
-
-    fn disable_texture(&mut self) {}
-
-    fn tri_list_uv(&mut self, vertices: &[f32], texture_coords: &[f32]) {
+    fn tri_list_uv<F>(&mut self, color: &[f32; 4], texture: &Texture, mut f: F)
+        where F: FnMut(&mut FnMut(&[f32], &[f32]))
+    {
         let &mut GraphicsBackEnd {
             ref mut renderer,
             ref frame,
@@ -375,20 +369,25 @@ for GraphicsBackEnd<'a, C> {
             },
         } = self;
 
-        assert_eq!(
-            vertices.len() * UV_COMPONENTS,
-            texture_coords.len() * POS_COMPONENTS
-        );
-        renderer.update_buffer_vec(*buffer_pos, vertices, 0);
-        renderer.update_buffer_vec(*buffer_uv, texture_coords, 0);
+        batch_uv.param.s_texture.0 = texture.handle;
+        batch_uv.param.color = *color;
 
-        let n = vertices.len() / POS_COMPONENTS;
-        batch_uv.slice = gfx::Slice {
-                prim_type: gfx::PrimitiveType::TriangleList,
-                start: 0,
-                end: n as u32,
-                kind: gfx::SliceKind::Vertex
-            };
-        renderer.draw(batch_uv, *frame);
+        f(&mut |vertices: &[f32], texture_coords: &[f32]| {
+            assert_eq!(
+                vertices.len() * UV_COMPONENTS,
+                texture_coords.len() * POS_COMPONENTS
+            );
+            renderer.update_buffer_vec(*buffer_pos, vertices, 0);
+            renderer.update_buffer_vec(*buffer_uv, texture_coords, 0);
+
+            let n = vertices.len() / POS_COMPONENTS;
+            batch_uv.slice = gfx::Slice {
+                    prim_type: gfx::PrimitiveType::TriangleList,
+                    start: 0,
+                    end: n as u32,
+                    kind: gfx::SliceKind::Vertex
+                };
+            let _ = renderer.draw(batch_uv, *frame);
+        })
     }
 }
