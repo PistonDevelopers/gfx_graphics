@@ -1,7 +1,7 @@
 [package]
 
 name = "piston2d-gfx_graphics"
-version = "0.0.3"
+version = "0.1.0"
 authors = ["bvssvni <bvssvni@gmail.com>"]
 keywords = ["graphics", "2d", "gfx"]
 description = "A Gfx 2D back-end for the Piston game engine"
@@ -35,6 +35,10 @@ git = "https://github.com/gfx-rs/gfx-rs"
 git = "https://github.com/gfx-rs/gfx-rs"
 #version = "0.1.0"
 
+[dependencies.freetype-rs]
+git = "https://github.com/PistonDevelopers/freetype-rs.git"
+#version = "0.0.6"
+
 [dev-dependencies.shader_version]
 git = "https://github.com/pistondevelopers/shader_version"
 #version = "0.0.1"
@@ -50,4 +54,3 @@ git = "https://github.com/pistondevelopers/sdl2_window"
 [dev-dependencies.sdl2]
 git = "https://github.com/AngryLawyer/rust-sdl2"
 #version = "0.0.18"
-
