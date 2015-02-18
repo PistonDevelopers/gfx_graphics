@@ -5,8 +5,8 @@ use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 
 use Texture;
 
-static VERTEX_SHADER: &'static [u8] = b"
-#version 120
+static VERTEX_SHADER: [&'static [u8]; 2] = [
+b"#version 120
 uniform vec4 color;
 
 attribute vec2 pos;
@@ -14,19 +14,39 @@ attribute vec2 pos;
 void main() {
     gl_Position = vec4(pos, 0.0, 1.0);
 }
-";
+",
+b"#version 150 core
+uniform vec4 color;
 
-static FRAGMENT_SHADER: &'static [u8] = b"
-#version 120
+in vec2 pos;
+
+void main() {
+    gl_Position = vec4(pos, 0.0, 1.0);
+}
+"
+];
+
+static FRAGMENT_SHADER: [&'static [u8]; 2] = [
+b"#version 120
 uniform vec4 color;
 
 void main() {
     gl_FragColor = color;
 }
-";
+",
+b"#version 150 core
+uniform vec4 color;
 
-static VERTEX_SHADER_UV: &'static [u8] = b"
-#version 120
+out vec4 o_Color;
+
+void main() {
+    o_Color = color;
+}
+"
+];
+
+static VERTEX_SHADER_UV: [&'static [u8]; 2] = [
+b"#version 120
 uniform sampler2D s_texture;
 uniform vec4 color;
 
@@ -39,10 +59,23 @@ void main() {
     v_UV = uv;
     gl_Position = vec4(pos, 0.0, 1.0);
 }
-";
+",
+b"#version 150 core
+uniform sampler2D s_texture;
+uniform vec4 color;
 
-static FRAGMENT_SHADER_UV: &'static [u8] = b"
-#version 120
+in vec2 pos;
+in vec2 uv;
+out vec2 v_UV;
+void main() {
+    v_UV = uv;
+    gl_Position = vec4(pos, 0.0, 1.0);
+}
+"
+];
+
+static FRAGMENT_SHADER_UV: [&'static [u8]; 2] = [
+b"#version 120
 uniform sampler2D s_texture;
 uniform vec4 color;
 
@@ -52,7 +85,21 @@ void main()
 {
     gl_FragColor = texture2D(s_texture, v_UV) * color;
 }
-";
+",
+b"#version 150 core
+uniform sampler2D s_texture;
+uniform vec4 color;
+
+out vec4 o_Color;
+
+in vec2 v_UV;
+
+void main()
+{
+    o_Color = texture(s_texture, v_UV) * color;
+}
+"
+];
 
 static POS_COMPONENTS: usize = 2;
 static UV_COMPONENTS: usize = 2;
@@ -93,11 +140,39 @@ impl G2D {
     /// Creates a new G2D object.
     pub fn new<D: gfx::Device>(device: &mut D) -> G2D {
         use gfx::DeviceExt;
+
+        let shader_model = device.get_capabilities().shader_model;
+
+        let vertex = gfx::ShaderSource {
+            glsl_120: Some(VERTEX_SHADER[0]),
+            glsl_150: Some(VERTEX_SHADER[1]),
+            .. gfx::ShaderSource::empty()
+        };
+        let fragment = gfx::ShaderSource {
+            glsl_120: Some(FRAGMENT_SHADER[0]),
+            glsl_150: Some(FRAGMENT_SHADER[1]),
+            .. gfx::ShaderSource::empty()
+        };
+
         let program = device.link_program(
-            VERTEX_SHADER, FRAGMENT_SHADER)
+            vertex.choose(shader_model).unwrap(),
+            fragment.choose(shader_model).unwrap())
             .unwrap();
+
+        let vertex = gfx::ShaderSource {
+            glsl_120: Some(VERTEX_SHADER_UV[0]),
+            glsl_150: Some(VERTEX_SHADER_UV[1]),
+            .. gfx::ShaderSource::empty()
+        };
+        let fragment = gfx::ShaderSource {
+            glsl_120: Some(FRAGMENT_SHADER_UV[0]),
+            glsl_150: Some(FRAGMENT_SHADER_UV[1]),
+            .. gfx::ShaderSource::empty()
+        };
+
         let program_uv = device.link_program(
-            VERTEX_SHADER_UV, FRAGMENT_SHADER_UV)
+            vertex.choose(shader_model).unwrap(),
+            fragment.choose(shader_model).unwrap())
             .unwrap();
 
         let buffer_pos = device.create_buffer(
