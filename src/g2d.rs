@@ -83,8 +83,8 @@ struct ParamsUV {
 
 /// The graphics back-end.
 pub struct G2D {
-    buffer_pos: gfx::BufferHandle<f32>,
-    buffer_uv: gfx::BufferHandle<f32>,
+    buffer_pos: gfx::BufferHandle<gfx::GlResources, f32>,
+    buffer_uv: gfx::BufferHandle<gfx::GlResources, f32>,
     batch: gfx::batch::OwnedBatch<Params>,
     batch_uv: gfx::batch::OwnedBatch<ParamsUV>,
 }
@@ -177,7 +177,7 @@ impl G2D {
         mut f: F
     )
         where
-            C: gfx::CommandBuffer,
+            C: gfx::Device,
             F: FnMut(Context, &mut GraphicsBackEnd<C>)
     {
         let ref mut g = GraphicsBackEnd::new(
@@ -196,13 +196,13 @@ impl G2D {
 }
 
 /// Used for rendering 2D graphics.
-pub struct GraphicsBackEnd<'a, C: 'a + gfx::CommandBuffer> {
+pub struct GraphicsBackEnd<'a, C: 'a + gfx::Device> {
     renderer: &'a mut gfx::Renderer<C>,
     frame: &'a gfx::Frame,
     g2d: &'a mut G2D,
 }
 
-impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
+impl<'a, C: gfx::Device> GraphicsBackEnd<'a, C> {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(renderer: &'a mut gfx::Renderer<C>,
                frame: &'a gfx::Frame,
@@ -249,7 +249,7 @@ impl<'a, C: gfx::CommandBuffer> GraphicsBackEnd<'a, C> {
     }
 }
 
-impl<'a, C: gfx::CommandBuffer> BackEnd
+impl<'a, C: gfx::Device> BackEnd
 for GraphicsBackEnd<'a, C> {
     type Texture = Texture;
 
