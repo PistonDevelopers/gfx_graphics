@@ -1,13 +1,11 @@
 
 use gfx;
-use gfx::DeviceHelper;
 use graphics::{ Context, BackEnd };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 
 use Texture;
 
-static VERTEX_SHADER: gfx::ShaderSource<'static> = shaders!{
-glsl_120: b"
+static VERTEX_SHADER: &'static [u8] = b"
 #version 120
 uniform vec4 color;
 
@@ -16,42 +14,18 @@ attribute vec2 pos;
 void main() {
     gl_Position = vec4(pos, 0.0, 1.0);
 }
-",
-glsl_150: b"
-#version 150 core
-uniform vec4 color;
+";
 
-in vec2 pos;
-
-void main() {
-    gl_Position = vec4(pos, 0.0, 1.0);
-}
-"
-};
-
-static FRAGMENT_SHADER: gfx::ShaderSource<'static> = shaders!{
-glsl_120: b"
+static FRAGMENT_SHADER: &'static [u8] = b"
 #version 120
 uniform vec4 color;
 
 void main() {
     gl_FragColor = color;
 }
-",
-glsl_150: b"
-#version 150 core
-uniform vec4 color;
+";
 
-out vec4 o_Color;
-
-void main() {
-    o_Color = color;
-}
-"
-};
-
-static VERTEX_SHADER_UV: gfx::ShaderSource<'static> = shaders!{
-glsl_120: b"
+static VERTEX_SHADER_UV: &'static [u8] = b"
 #version 120
 uniform sampler2D s_texture;
 uniform vec4 color;
@@ -65,24 +39,9 @@ void main() {
     v_UV = uv;
     gl_Position = vec4(pos, 0.0, 1.0);
 }
-",
-glsl_150: b"
-#version 150 core
-uniform sampler2D s_texture;
-uniform vec4 color;
+";
 
-in vec2 pos;
-in vec2 uv;
-out vec2 v_UV;
-void main() {
-    v_UV = uv;
-    gl_Position = vec4(pos, 0.0, 1.0);
-}
-"
-};
-
-static FRAGMENT_SHADER_UV: gfx::ShaderSource<'static> = shaders!{
-glsl_120: b"
+static FRAGMENT_SHADER_UV: &'static [u8] = b"
 #version 120
 uniform sampler2D s_texture;
 uniform vec4 color;
@@ -93,22 +52,7 @@ void main()
 {
     gl_FragColor = texture2D(s_texture, v_UV) * color;
 }
-",
-glsl_150: b"
-#version 150 core
-uniform sampler2D s_texture;
-uniform vec4 color;
-
-out vec4 o_Color;
-
-in vec2 v_UV;
-
-void main()
-{
-    o_Color = texture(s_texture, v_UV) * color;
-}
-"
-};
+";
 
 static POS_COMPONENTS: usize = 2;
 static UV_COMPONENTS: usize = 2;
@@ -148,14 +92,13 @@ pub struct G2D {
 impl G2D {
     /// Creates a new G2D object.
     pub fn new<D: gfx::Device>(device: &mut D) -> G2D {
+        use gfx::DeviceExt;
         let program = device.link_program(
-                VERTEX_SHADER.clone(),
-                FRAGMENT_SHADER.clone()
-            ).ok().expect("Could not link `VERTEX_SHADER` and `FRAGMENT_SHADER`");
+            VERTEX_SHADER, FRAGMENT_SHADER)
+            .unwrap();
         let program_uv = device.link_program(
-                VERTEX_SHADER_UV.clone(),
-                FRAGMENT_SHADER_UV.clone()
-            ).ok().expect("Could not link `VERTEX_SHADER_UV` and `FRAGMENT_SHADER_UV`");
+            VERTEX_SHADER_UV, FRAGMENT_SHADER_UV)
+            .unwrap();
 
         let buffer_pos = device.create_buffer(
             POS_COMPONENTS * BUFFER_SIZE,
@@ -178,15 +121,16 @@ impl G2D {
         ).into_iter());
 
         let params = Params {
-                color: [1.0; 4],
-            };
+            color: [1.0; 4],
+        };
         let mut batch = gfx::batch::OwnedBatch::new(mesh, program, params)
-            .ok().expect("Could not create `OwnedBatch` for `batch`");
+            .unwrap();
 
         let sampler = device.create_sampler(
-                gfx::tex::SamplerInfo::new(gfx::tex::FilterMethod::Trilinear,
-                                           gfx::tex::WrapMode::Clamp)
-            );
+            gfx::tex::SamplerInfo::new(
+                gfx::tex::FilterMethod::Trilinear,
+                gfx::tex::WrapMode::Clamp)
+        );
 
         // Create a dummy texture
         let texture_info = gfx::tex::TextureInfo {
@@ -199,17 +143,17 @@ impl G2D {
         };
         let image_info = texture_info.to_image_info();
         let texture = device.create_texture(texture_info)
-            .ok().expect("Could not create texture");
+            .unwrap();
         device.update_texture(&texture, &image_info,
                 &[0x20u8, 0xA0u8, 0xC0u8, 0x00u8])
-            .ok().expect("Could not update texture");
+            .unwrap();
         let params_uv = ParamsUV {
             color: [1.0; 4],
             s_texture: (texture, Some(sampler))
         };
         let mut batch_uv = gfx::batch::OwnedBatch::new(
             mesh_uv, program_uv, params_uv)
-                .ok().expect("Could not created `OwnedBatch` for `batch_uv`");
+            .unwrap();
 
         // Disable culling.
         batch.state.primitive.method =

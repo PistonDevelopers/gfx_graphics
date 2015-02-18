@@ -9,7 +9,7 @@ extern crate sdl2;
 
 use piston::quack::Get;
 use std::cell::RefCell;
-use gfx::{Device, DeviceHelper};
+use gfx::{Device, DeviceExt};
 use gfx_graphics::{
     G2D,
     Texture,
@@ -36,7 +36,7 @@ fn main() {
     let frame = gfx::Frame::new(w as u16, h as u16);
     let mut renderer = device.create_renderer();
 
-    let image = Texture::from_path(&mut device, 
+    let image = Texture::from_path(&mut device,
         &Path::new("./assets/rust.png")).unwrap();
     let mut g2d = G2D::new(&mut device);
     let window = RefCell::new(window);
@@ -46,13 +46,13 @@ fn main() {
             use graphics::RelativeTransform;
 
             g2d.draw(&mut renderer, &frame, |c, g| {
-                graphics::clear([1.0; 4], g);        
+                graphics::clear([1.0; 4], g);
                 graphics::Rectangle::new([1.0, 0.0, 0.0, 1.0])
                     .draw([0.0, 0.0, 100.0, 100.0], &c, g);
                 graphics::Rectangle::new([0.0, 1.0, 0.0, 0.3])
                     .draw(
-                        [50.0, 50.0, 100.0, 100.0], 
-                        &c, 
+                        [50.0, 50.0, 100.0, 100.0],
+                        &c,
                         g
                     );
                 graphics::image(&image, &c.trans(100.0, 100.0), g);

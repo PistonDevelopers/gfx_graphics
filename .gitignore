@@ -18,6 +18,7 @@
 /bin/test-internal
 /bin/test-external
 /doc/
+/examples/
 /target/
 /build/
 /.rust/
