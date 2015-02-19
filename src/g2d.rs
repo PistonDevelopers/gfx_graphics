@@ -361,7 +361,7 @@ for GraphicsBackEnd<'a, C> {
         batch.param.color = *color;
 
         f(&mut |vertices: &[f32]| {
-            renderer.update_buffer_vec(*buffer_pos, vertices, 0);
+            renderer.update_buffer_vec(buffer_pos.clone(), vertices, 0);
 
             let n = vertices.len() / POS_COMPONENTS;
             batch.slice = gfx::Slice {
@@ -396,8 +396,8 @@ for GraphicsBackEnd<'a, C> {
                 vertices.len() * UV_COMPONENTS,
                 texture_coords.len() * POS_COMPONENTS
             );
-            renderer.update_buffer_vec(*buffer_pos, vertices, 0);
-            renderer.update_buffer_vec(*buffer_uv, texture_coords, 0);
+            renderer.update_buffer_vec(buffer_pos.clone(), vertices, 0);
+            renderer.update_buffer_vec(buffer_uv.clone(), texture_coords, 0);
 
             let n = vertices.len() / POS_COMPONENTS;
             batch_uv.slice = gfx::Slice {
