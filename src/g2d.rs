@@ -271,7 +271,12 @@ impl G2D {
 }
 
 /// Used for rendering 2D graphics.
-pub struct GraphicsBackEnd<'a, C: 'a + gfx::Device> {
+pub struct GraphicsBackEnd<'a, C>
+    where
+        C: 'a + gfx::Device,
+        <C as gfx::Device>::CommandBuffer: 'a,
+        <C as gfx::Device>::Resources: 'a
+{
     renderer: &'a mut gfx::Renderer<C>,
     frame: &'a gfx::Frame,
     g2d: &'a mut G2D,
