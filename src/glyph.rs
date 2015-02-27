@@ -9,7 +9,7 @@ use graphics;
 pub type FontSize = u32;
 
 /// The type alias for font characters.
-pub type Character = graphics::character::Character<::Texture>;
+pub type Character<D> = graphics::character::Character<::Texture<D>>;
 
 /// An enum to represent various possible run-time errors that may occur.
 #[derive(Copy, Debug, PartialEq)]
@@ -21,17 +21,17 @@ pub enum Error {
 }
 
 /// A struct used for caching rendered font.
-pub struct GlyphCache {
+pub struct GlyphCache<D: gfx::Device> {
     /// The font face.
     pub face: freetype::Face,
-    empty_texture: ::Texture,
-    data: HashMap<(FontSize, char), Character>,
+    empty_texture: ::Texture<D>,
+    data: HashMap<(FontSize, char), Character<D>>,
 }
 
-impl GlyphCache {
+impl<D: gfx::Device> GlyphCache<D> {
      /// Constructor for a GlyphCache.
-     pub fn new<D: gfx::Device>(font: &Path, device: &mut D)
-                -> Result<GlyphCache, Error> {
+     pub fn new(font: &Path, device: &mut D)
+                -> Result<GlyphCache<D>, Error> {
         let freetype = match freetype::Library::init() {
             Ok(freetype) => freetype,
             Err(why) => return Err(Error::Freetype(why)),
@@ -68,7 +68,7 @@ impl GlyphCache {
     }
 
     /// Generate all pending characters.
-    pub fn update<D: gfx::Device>(&mut self, device: &mut D) {
+    pub fn update(&mut self, device: &mut D) {
         let empty_handle = self.empty_texture.handle;
         for (&(size, ch), value) in self.data.iter_mut()
                 .filter(|&(_, ref c)| c.texture.handle == empty_handle) {
@@ -100,10 +100,10 @@ impl GlyphCache {
     }
 }
 
-impl graphics::character::CharacterCache for GlyphCache {
-    type Texture = ::Texture;
+impl<D: gfx::Device> graphics::character::CharacterCache for GlyphCache<D> {
+    type Texture = ::Texture<D>;
 
-    fn character(&mut self, size: FontSize, ch: char) -> &Character {
+    fn character(&mut self, size: FontSize, ch: char) -> &Character<D> {
         match self.data.entry((size, ch)) {
             //returning `into_mut()' to work around lifetime issues
             Entry::Occupied(v) => v.into_mut(),
