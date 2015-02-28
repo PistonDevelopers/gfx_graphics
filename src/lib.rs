@@ -13,8 +13,10 @@ extern crate freetype;
 
 pub use gfx_texture::Texture;
 
-pub use g2d::G2D;
-pub use g2d::GraphicsBackEnd;
+pub use g2d::Gfx2d;
+pub use g2d::GfxGraphics;
+pub use g2d::Gfx2d as G2D;
+pub use g2d::GfxGraphics as GraphicsBackEnd;
 pub use glyph::GlyphCache;
 
 mod g2d;

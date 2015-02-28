@@ -129,17 +129,17 @@ struct ParamsUV {
     s_texture: gfx::shade::TextureParam<GlResources>,
 }
 
-/// The graphics back-end.
-pub struct G2D {
+/// The data used for drawing 2D graphics.
+pub struct Gfx2d {
     buffer_pos: gfx::BufferHandle<GlResources, f32>,
     buffer_uv: gfx::BufferHandle<GlResources, f32>,
     batch: gfx::batch::OwnedBatch<Params>,
     batch_uv: gfx::batch::OwnedBatch<ParamsUV>,
 }
 
-impl G2D {
+impl Gfx2d {
     /// Creates a new G2D object.
-    pub fn new<D>(device: &mut D) -> G2D
+    pub fn new<D>(device: &mut D) -> Gfx2d
         where
             D: gfx::Device<Resources = GlResources>
     {
@@ -240,7 +240,7 @@ impl G2D {
         batch_uv.state.primitive.method =
             gfx::state::RasterMethod::Fill(gfx::state::CullMode::Nothing);
 
-        G2D {
+        Gfx2d {
             buffer_pos: buffer_pos,
             buffer_uv: buffer_uv,
             batch: batch,
@@ -257,9 +257,9 @@ impl G2D {
     )
         where
             C: gfx::Device<Resources = GlResources>,
-            F: FnMut(Context, &mut GraphicsBackEnd<C>)
+            F: FnMut(Context, &mut GfxGraphics<C>)
     {
-        let ref mut g = GraphicsBackEnd::new(
+        let ref mut g = GfxGraphics::new(
             renderer,
             frame,
             self
@@ -275,7 +275,7 @@ impl G2D {
 }
 
 /// Used for rendering 2D graphics.
-pub struct GraphicsBackEnd<'a, C>
+pub struct GfxGraphics<'a, C>
     where
         C: 'a + gfx::Device,
         <C as gfx::Device>::CommandBuffer: 'a,
@@ -291,18 +291,18 @@ pub struct GraphicsBackEnd<'a, C>
 {
     renderer: &'a mut gfx::Renderer<C::CommandBuffer>,
     frame: &'a gfx::Frame<C::Resources>,
-    g2d: &'a mut G2D,
+    g2d: &'a mut Gfx2d,
 }
 
-impl<'a, C> GraphicsBackEnd<'a, C>
+impl<'a, C> GfxGraphics<'a, C>
     where
         C: gfx::Device<Resources = GlResources>
 {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(renderer: &'a mut gfx::Renderer<C::CommandBuffer>,
                frame: &'a gfx::Frame<C::Resources>,
-               g2d: &'a mut G2D) -> GraphicsBackEnd<'a, C> {
-        GraphicsBackEnd {
+               g2d: &'a mut Gfx2d) -> GfxGraphics<'a, C> {
+        GfxGraphics {
             renderer: renderer,
             frame: frame,
             g2d: g2d,
@@ -345,7 +345,7 @@ impl<'a, C> GraphicsBackEnd<'a, C>
 }
 
 impl<'a, C> Graphics
-for GraphicsBackEnd<'a, C>
+for GfxGraphics<'a, C>
     where
         C: gfx::Device<Resources = GlResources>,
         C::Resources: 'a,
@@ -353,7 +353,7 @@ for GraphicsBackEnd<'a, C>
     type Texture = Texture<C>;
 
     fn clear(&mut self, color: [f32; 4]) {
-        let &mut GraphicsBackEnd {
+        let &mut GfxGraphics {
             ref mut renderer,
             frame,
             ..
@@ -372,10 +372,10 @@ for GraphicsBackEnd<'a, C>
     fn tri_list<F>(&mut self, color: &[f32; 4], mut f: F)
         where F: FnMut(&mut FnMut(&[f32]))
     {
-        let &mut GraphicsBackEnd {
+        let &mut GfxGraphics {
             ref mut renderer,
             ref frame,
-            g2d: &mut G2D {
+            g2d: &mut Gfx2d {
                 ref mut buffer_pos,
                 ref mut batch,
                 ..
@@ -406,10 +406,10 @@ for GraphicsBackEnd<'a, C>
     )
         where F: FnMut(&mut FnMut(&[f32], &[f32]))
     {
-        let &mut GraphicsBackEnd {
+        let &mut GfxGraphics {
             ref mut renderer,
             ref frame,
-            g2d: &mut G2D {
+            g2d: &mut Gfx2d {
                 ref mut buffer_pos,
                 ref mut buffer_uv,
                 ref mut batch_uv,
