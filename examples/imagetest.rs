@@ -1,9 +1,11 @@
+#![feature(old_path)]
 
 extern crate piston;
 extern crate shader_version;
 extern crate graphics;
 extern crate sdl2_window;
 extern crate gfx;
+extern crate gfx_device_gl;
 extern crate gfx_graphics;
 extern crate sdl2;
 
@@ -29,7 +31,7 @@ fn main() {
         }
     );
 
-    let mut device = gfx::GlDevice::new(|s| unsafe {
+    let mut device = gfx_device_gl::GlDevice::new(|s| unsafe {
         std::mem::transmute(sdl2::video::gl_get_proc_address(s))
     });
     let piston::window::Size([w, h]) = window.get();
