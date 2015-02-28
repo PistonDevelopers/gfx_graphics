@@ -1,6 +1,7 @@
 
 use gfx;
-use graphics::{ Context, BackEnd };
+use gfx_device_gl::GlResources;
+use graphics::{ Context, Graphics };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 
 use Texture;
@@ -117,28 +118,31 @@ struct ColorFormat { color: [f32; 4] }
 #[vertex_format]
 struct TexCoordsFormat { uv: [f32; 2] }
 
-#[shader_param]
+#[shader_param(GlResources)]
 struct Params {
     color: [f32; 4],
 }
 
-#[shader_param]
+#[shader_param(GlResources)]
 struct ParamsUV {
     color: [f32; 4],
-    s_texture: gfx::shade::TextureParam,
+    s_texture: gfx::shade::TextureParam<GlResources>,
 }
 
 /// The graphics back-end.
 pub struct G2D {
-    buffer_pos: gfx::BufferHandle<gfx::GlResources, f32>,
-    buffer_uv: gfx::BufferHandle<gfx::GlResources, f32>,
+    buffer_pos: gfx::BufferHandle<GlResources, f32>,
+    buffer_uv: gfx::BufferHandle<GlResources, f32>,
     batch: gfx::batch::OwnedBatch<Params>,
     batch_uv: gfx::batch::OwnedBatch<ParamsUV>,
 }
 
 impl G2D {
     /// Creates a new G2D object.
-    pub fn new<D: gfx::Device>(device: &mut D) -> G2D {
+    pub fn new<D>(device: &mut D) -> G2D
+        where
+            D: gfx::Device<Resources = GlResources>
+    {
         use gfx::DeviceExt;
 
         let shader_model = device.get_capabilities().shader_model;
@@ -184,14 +188,14 @@ impl G2D {
 
         let mut mesh = gfx::Mesh::new(BUFFER_SIZE as u32);
         mesh.attributes.extend(gfx::VertexFormat::generate(
-            None::<PositionFormat>,
+            None::<&PositionFormat>,
             buffer_pos.raw()
         ).into_iter());
 
         // Reuse parameters from `mesh`.
         let mut mesh_uv = mesh.clone();
         mesh_uv.attributes.extend(gfx::VertexFormat::generate(
-            None::<TexCoordsFormat>,
+            None::<&TexCoordsFormat>,
             buffer_uv.raw()
         ).into_iter());
 
@@ -247,12 +251,12 @@ impl G2D {
     /// Renders graphics to a Gfx renderer.
     pub fn draw<C, F>(
         &mut self,
-        renderer: &mut gfx::Renderer<C>,
-        frame: &gfx::Frame,
+        renderer: &mut gfx::Renderer<C::CommandBuffer>,
+        frame: &gfx::Frame<C::Resources>,
         mut f: F
     )
         where
-            C: gfx::Device,
+            C: gfx::Device<Resources = GlResources>,
             F: FnMut(Context, &mut GraphicsBackEnd<C>)
     {
         let ref mut g = GraphicsBackEnd::new(
@@ -275,17 +279,28 @@ pub struct GraphicsBackEnd<'a, C>
     where
         C: 'a + gfx::Device,
         <C as gfx::Device>::CommandBuffer: 'a,
-        <C as gfx::Device>::Resources: 'a
+        <C as gfx::Device>::Resources: 'a,
+        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Sampler: 'a,
+        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Texture: 'a,
+        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Surface: 'a,
+        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::FrameBuffer: 'a,
+        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Program: 'a,
+        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Shader: 'a,
+        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::ArrayBuffer: 'a,
+        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Buffer: 'a
 {
-    renderer: &'a mut gfx::Renderer<C>,
-    frame: &'a gfx::Frame,
+    renderer: &'a mut gfx::Renderer<C::CommandBuffer>,
+    frame: &'a gfx::Frame<C::Resources>,
     g2d: &'a mut G2D,
 }
 
-impl<'a, C: gfx::Device> GraphicsBackEnd<'a, C> {
+impl<'a, C> GraphicsBackEnd<'a, C>
+    where
+        C: gfx::Device<Resources = GlResources>
+{
     /// Creates a new object for rendering 2D graphics.
-    pub fn new(renderer: &'a mut gfx::Renderer<C>,
-               frame: &'a gfx::Frame,
+    pub fn new(renderer: &'a mut gfx::Renderer<C::CommandBuffer>,
+               frame: &'a gfx::Frame<C::Resources>,
                g2d: &'a mut G2D) -> GraphicsBackEnd<'a, C> {
         GraphicsBackEnd {
             renderer: renderer,
@@ -295,7 +310,7 @@ impl<'a, C: gfx::Device> GraphicsBackEnd<'a, C> {
     }
 
     /// Returns true if texture has alpha channel.
-    pub fn has_texture_alpha(&self, texture: &Texture) -> bool {
+    pub fn has_texture_alpha(&self, texture: &Texture<C>) -> bool {
         use gfx::tex::Components::RGBA;
 
         texture.handle.get_info().format.get_components() == Some(RGBA)
@@ -329,9 +344,13 @@ impl<'a, C: gfx::Device> GraphicsBackEnd<'a, C> {
     }
 }
 
-impl<'a, C: gfx::Device> BackEnd
-for GraphicsBackEnd<'a, C> {
-    type Texture = Texture;
+impl<'a, C> Graphics
+for GraphicsBackEnd<'a, C>
+    where
+        C: gfx::Device<Resources = GlResources>,
+        C::Resources: 'a,
+{
+    type Texture = Texture<C>;
 
     fn clear(&mut self, color: [f32; 4]) {
         let &mut GraphicsBackEnd {
@@ -379,7 +398,12 @@ for GraphicsBackEnd<'a, C> {
         })
     }
 
-    fn tri_list_uv<F>(&mut self, color: &[f32; 4], texture: &Texture, mut f: F)
+    fn tri_list_uv<F>(
+        &mut self,
+        color: &[f32; 4],
+        texture: &<Self as Graphics>::Texture,
+        mut f: F
+    )
         where F: FnMut(&mut FnMut(&[f32], &[f32]))
     {
         let &mut GraphicsBackEnd {
