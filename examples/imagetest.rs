@@ -13,7 +13,7 @@ use piston::quack::Get;
 use std::cell::RefCell;
 use gfx::{Device, DeviceExt};
 use gfx_graphics::{
-    G2D,
+    Gfx2d,
     Texture,
 };
 use sdl2_window::Sdl2Window;
@@ -40,7 +40,7 @@ fn main() {
 
     let image = Texture::from_path(&mut device,
         &Path::new("./assets/rust.png")).unwrap();
-    let mut g2d = G2D::new(&mut device);
+    let mut g2d = Gfx2d::new(&mut device);
     let window = RefCell::new(window);
     for e in piston::events(&window) {
         use piston::event::RenderEvent;
