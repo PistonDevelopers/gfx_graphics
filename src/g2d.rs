@@ -1,7 +1,7 @@
 
 use gfx;
 use gfx_device_gl::GlResources;
-use graphics::{ Context, Graphics };
+use graphics::{ Context, DrawState, Graphics };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 
 use Texture;
@@ -369,7 +369,12 @@ for GfxGraphics<'a, C>
             );
     }
 
-    fn tri_list<F>(&mut self, color: &[f32; 4], mut f: F)
+    fn tri_list<F>(
+        &mut self,
+        _draw_state: &DrawState,
+        color: &[f32; 4],
+        mut f: F
+    )
         where F: FnMut(&mut FnMut(&[f32]))
     {
         let &mut GfxGraphics {
@@ -400,6 +405,7 @@ for GfxGraphics<'a, C>
 
     fn tri_list_uv<F>(
         &mut self,
+        _draw_state: &DrawState,
         color: &[f32; 4],
         texture: &<Self as Graphics>::Texture,
         mut f: F
