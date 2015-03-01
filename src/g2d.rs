@@ -1,6 +1,6 @@
 
+use std::marker::PhantomData;
 use gfx;
-use gfx_device_gl::GlResources;
 use graphics::{ Context, DrawState, Graphics };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 
@@ -118,31 +118,29 @@ struct ColorFormat { color: [f32; 4] }
 #[vertex_format]
 struct TexCoordsFormat { uv: [f32; 2] }
 
-#[shader_param(GlResources)]
-struct Params {
+#[shader_param]
+struct Params<R: gfx::Resources> {
     color: [f32; 4],
+    _dummy: PhantomData<R>,
 }
 
-#[shader_param(GlResources)]
-struct ParamsUV {
+#[shader_param]
+struct ParamsUV<R: gfx::Resources> {
     color: [f32; 4],
-    s_texture: gfx::shade::TextureParam<GlResources>,
+    s_texture: gfx::shade::TextureParam<R>,
 }
 
 /// The data used for drawing 2D graphics.
-pub struct Gfx2d {
-    buffer_pos: gfx::BufferHandle<GlResources, f32>,
-    buffer_uv: gfx::BufferHandle<GlResources, f32>,
-    batch: gfx::batch::OwnedBatch<Params>,
-    batch_uv: gfx::batch::OwnedBatch<ParamsUV>,
+pub struct Gfx2d<D: gfx::Device> {
+    buffer_pos: gfx::BufferHandle<D::Resources, f32>,
+    buffer_uv: gfx::BufferHandle<D::Resources, f32>,
+    batch: gfx::batch::OwnedBatch<Params<D::Resources>>,
+    batch_uv: gfx::batch::OwnedBatch<ParamsUV<D::Resources>>,
 }
 
-impl Gfx2d {
+impl<D: gfx::Device> Gfx2d<D> {
     /// Creates a new G2D object.
-    pub fn new<D>(device: &mut D) -> Gfx2d
-        where
-            D: gfx::Device<Resources = GlResources>
-    {
+    pub fn new(device: &mut D) -> Gfx2d<D> {
         use gfx::DeviceExt;
 
         let shader_model = device.get_capabilities().shader_model;
@@ -201,6 +199,7 @@ impl Gfx2d {
 
         let params = Params {
             color: [1.0; 4],
+            _dummy: PhantomData,
         };
         let mut batch = gfx::batch::OwnedBatch::new(mesh, program, params)
             .unwrap();
@@ -249,16 +248,12 @@ impl Gfx2d {
     }
 
     /// Renders graphics to a Gfx renderer.
-    pub fn draw<C, F>(
+    pub fn draw<F: FnMut(Context, &mut GfxGraphics<D>)>(
         &mut self,
-        renderer: &mut gfx::Renderer<C::CommandBuffer>,
-        frame: &gfx::Frame<C::Resources>,
+        renderer: &mut gfx::Renderer<D::CommandBuffer>,
+        frame: &gfx::Frame<D::Resources>,
         mut f: F
-    )
-        where
-            C: gfx::Device<Resources = GlResources>,
-            F: FnMut(Context, &mut GfxGraphics<C>)
-    {
+    ) {
         let ref mut g = GfxGraphics::new(
             renderer,
             frame,
@@ -275,33 +270,31 @@ impl Gfx2d {
 }
 
 /// Used for rendering 2D graphics.
-pub struct GfxGraphics<'a, C>
+pub struct GfxGraphics<'a, D>
     where
-        C: 'a + gfx::Device,
-        <C as gfx::Device>::CommandBuffer: 'a,
-        <C as gfx::Device>::Resources: 'a,
-        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Sampler: 'a,
-        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Texture: 'a,
-        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Surface: 'a,
-        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::FrameBuffer: 'a,
-        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Program: 'a,
-        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Shader: 'a,
-        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::ArrayBuffer: 'a,
-        <<C as gfx::device::Device>::Resources as gfx::device::Resources>::Buffer: 'a
+        D: 'a + gfx::Device,
+        <D as gfx::Device>::CommandBuffer: 'a,
+        <D as gfx::Device>::Mapper: 'a,
+        <D as gfx::Device>::Resources: 'a,
+        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Sampler: 'a,
+        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Texture: 'a,
+        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Surface: 'a,
+        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::FrameBuffer: 'a,
+        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Program: 'a,
+        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Shader: 'a,
+        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::ArrayBuffer: 'a,
+        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Buffer: 'a
 {
-    renderer: &'a mut gfx::Renderer<C::CommandBuffer>,
-    frame: &'a gfx::Frame<C::Resources>,
-    g2d: &'a mut Gfx2d,
+    renderer: &'a mut gfx::Renderer<D::CommandBuffer>,
+    frame: &'a gfx::Frame<D::Resources>,
+    g2d: &'a mut Gfx2d<D>,
 }
 
-impl<'a, C> GfxGraphics<'a, C>
-    where
-        C: gfx::Device<Resources = GlResources>
-{
+impl<'a, D: gfx::Device> GfxGraphics<'a, D> {
     /// Creates a new object for rendering 2D graphics.
-    pub fn new(renderer: &'a mut gfx::Renderer<C::CommandBuffer>,
-               frame: &'a gfx::Frame<C::Resources>,
-               g2d: &'a mut Gfx2d) -> GfxGraphics<'a, C> {
+    pub fn new(renderer: &'a mut gfx::Renderer<D::CommandBuffer>,
+               frame: &'a gfx::Frame<D::Resources>,
+               g2d: &'a mut Gfx2d<D>) -> GfxGraphics<'a, D> {
         GfxGraphics {
             renderer: renderer,
             frame: frame,
@@ -310,7 +303,7 @@ impl<'a, C> GfxGraphics<'a, C>
     }
 
     /// Returns true if texture has alpha channel.
-    pub fn has_texture_alpha(&self, texture: &Texture<C>) -> bool {
+    pub fn has_texture_alpha(&self, texture: &Texture<D>) -> bool {
         use gfx::tex::Components::RGBA;
 
         texture.handle.get_info().format.get_components() == Some(RGBA)
@@ -344,13 +337,12 @@ impl<'a, C> GfxGraphics<'a, C>
     }
 }
 
-impl<'a, C> Graphics
-for GfxGraphics<'a, C>
+impl<'a, D: gfx::Device> Graphics
+for GfxGraphics<'a, D>
     where
-        C: gfx::Device<Resources = GlResources>,
-        C::Resources: 'a,
+        D::Resources: 'a,
 {
-    type Texture = Texture<C>;
+    type Texture = Texture<D>;
 
     fn clear(&mut self, color: [f32; 4]) {
         let &mut GfxGraphics {
