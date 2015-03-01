@@ -29,15 +29,11 @@ git = "https://github.com/pistondevelopers/image"
 
 [dependencies.gfx]
 git = "https://github.com/gfx-rs/gfx-rs"
-#version = "0.1.0"
-
-[dependencies.gfx_device_gl]
-git = "https://github.com/gfx-rs/gfx_device_gl"
-#version = "0.0.0"
+#version = "0.2.0"
 
 [dependencies.gfx_macros]
 git = "https://github.com/gfx-rs/gfx-rs"
-#version = "0.1.0"
+#version = "0.1.6"
 
 [dependencies.freetype-rs]
 git = "https://github.com/PistonDevelopers/freetype-rs.git"
