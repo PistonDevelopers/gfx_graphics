@@ -32,8 +32,8 @@ git = "https://github.com/gfx-rs/gfx-rs"
 #version = "0.2.0"
 
 [dependencies.gfx_macros]
-git = "https://github.com/gfx-rs/gfx-rs"
-#version = "0.1.6"
+git = "https://github.com/gfx-rs/gfx_macros"
+#version = "0.1.7"
 
 [dependencies.freetype-rs]
 git = "https://github.com/PistonDevelopers/freetype-rs.git"
