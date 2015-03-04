@@ -263,9 +263,7 @@ impl<D: gfx::Device> Gfx2d<D> {
             frame.width as f64,
             frame.height as f64
         );
-        g.enable_alpha_blend();
         f(c, g);
-        g.disable_alpha_blend();
     }
 }
 
@@ -308,33 +306,6 @@ impl<'a, D: gfx::Device> GfxGraphics<'a, D> {
 
         texture.handle.get_info().format.get_components() == Some(RGBA)
     }
-
-    /// Enabled alpha blending.
-    pub fn enable_alpha_blend(&mut self) {
-        use std::default::Default;
-        use gfx::state::InverseFlag::{Normal, Inverse};
-        use gfx::state::Factor;
-        use gfx::state::BlendValue::SourceAlpha;
-
-        let blend = gfx::state::Blend {
-            value: [1.0, 1.0, 1.0, 1.0],
-            color: gfx::state::BlendChannel {
-                    equation: gfx::state::Equation::Add,
-                    source: Factor(Normal, SourceAlpha),
-                    destination: Factor(Inverse, SourceAlpha)
-                },
-            alpha: Default::default()
-        };
-
-        self.g2d.batch.state.blend = Some(blend);
-        self.g2d.batch_uv.state.blend = Some(blend);
-    }
-
-    /// Disables alpha blending.
-    pub fn disable_alpha_blend(&mut self) {
-        self.g2d.batch.state.blend = None;
-        self.g2d.batch_uv.state.blend = None;
-    }
 }
 
 impl<'a, D: gfx::Device> Graphics
@@ -363,7 +334,7 @@ for GfxGraphics<'a, D>
 
     fn tri_list<F>(
         &mut self,
-        _draw_state: &DrawState,
+        draw_state: &DrawState,
         color: &[f32; 4],
         mut f: F
     )
@@ -379,6 +350,7 @@ for GfxGraphics<'a, D>
             },
         } = self;
 
+        batch.state = *draw_state;
         batch.param.color = *color;
 
         f(&mut |vertices: &[f32]| {
@@ -397,7 +369,7 @@ for GfxGraphics<'a, D>
 
     fn tri_list_uv<F>(
         &mut self,
-        _draw_state: &DrawState,
+        draw_state: &DrawState,
         color: &[f32; 4],
         texture: &<Self as Graphics>::Texture,
         mut f: F
@@ -415,6 +387,7 @@ for GfxGraphics<'a, D>
             },
         } = self;
 
+        batch_uv.state = *draw_state;
         batch_uv.param.s_texture.0 = texture.handle;
         batch_uv.param.color = *color;
 
