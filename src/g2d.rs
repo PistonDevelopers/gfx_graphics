@@ -235,9 +235,9 @@ impl<D: gfx::Device> Gfx2d<D> {
 
         // Disable culling.
         batch.state.primitive.method =
-            gfx::state::RasterMethod::Fill(gfx::state::CullMode::Nothing);
+            gfx::state::RasterMethod::Fill(gfx::state::CullFace::Nothing);
         batch_uv.state.primitive.method =
-            gfx::state::RasterMethod::Fill(gfx::state::CullMode::Nothing);
+            gfx::state::RasterMethod::Fill(gfx::state::CullFace::Nothing);
 
         Gfx2d {
             buffer_pos: buffer_pos,
