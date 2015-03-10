@@ -21,17 +21,17 @@ pub enum Error {
 }
 
 /// A struct used for caching rendered font.
-pub struct GlyphCache<D: gfx::Device> {
+pub struct GlyphCache<R: gfx::Resources> {
     /// The font face.
     pub face: freetype::Face,
-    empty_texture: ::Texture<D>,
-    data: HashMap<(FontSize, char), Character<D>>,
+    empty_texture: ::Texture<R>,
+    data: HashMap<(FontSize, char), Character<R>>,
 }
 
-impl<D: gfx::Device> GlyphCache<D> {
+impl<R> GlyphCache<R> where R: gfx::Resources {
      /// Constructor for a GlyphCache.
-     pub fn new(font: &Path, device: &mut D)
-                -> Result<GlyphCache<D>, Error> {
+     pub fn new<D: gfx::Factory<R>>(font: &Path, device: &mut D)
+                -> Result<GlyphCache<R>, Error> {
         let freetype = match freetype::Library::init() {
             Ok(freetype) => freetype,
             Err(why) => return Err(Error::Freetype(why)),
@@ -68,7 +68,7 @@ impl<D: gfx::Device> GlyphCache<D> {
     }
 
     /// Generate all pending characters.
-    pub fn update(&mut self, device: &mut D) {
+    pub fn update<D: gfx::Factory<R>>(&mut self, device: &mut D) {
         let empty_handle = self.empty_texture.handle;
         for (&(size, ch), value) in self.data.iter_mut()
                 .filter(|&(_, ref c)| c.texture.handle == empty_handle) {
@@ -100,10 +100,10 @@ impl<D: gfx::Device> GlyphCache<D> {
     }
 }
 
-impl<D: gfx::Device> graphics::character::CharacterCache for GlyphCache<D> {
-    type Texture = ::Texture<D>;
+impl<R: gfx::Resources> graphics::character::CharacterCache for GlyphCache<R> {
+    type Texture = ::Texture<R>;
 
-    fn character(&mut self, size: FontSize, ch: char) -> &Character<D> {
+    fn character(&mut self, size: FontSize, ch: char) -> &Character<R> {
         match self.data.entry((size, ch)) {
             //returning `into_mut()' to work around lifetime issues
             Entry::Occupied(v) => v.into_mut(),
