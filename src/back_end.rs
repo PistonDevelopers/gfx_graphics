@@ -299,7 +299,7 @@ impl<'a, D: gfx::Device> GfxGraphics<'a, D> {
     }
 
     /// Returns true if texture has alpha channel.
-    pub fn has_texture_alpha(&self, texture: &Texture<D>) -> bool {
+    pub fn has_texture_alpha(&self, texture: &Texture<D::Resources>) -> bool {
         use gfx::tex::Components::RGBA;
 
         texture.handle.get_info().format.get_components() == Some(RGBA)
@@ -310,6 +310,7 @@ impl<'a, D: gfx::Device> Graphics
 for GfxGraphics<'a, D>
     where
         D::Resources: 'a,
+        <D as gfx::device::Device>::CommandBuffer: 'a,
 {
     type Texture = Texture<D::Resources>;
 
@@ -352,7 +353,7 @@ for GfxGraphics<'a, D>
         batch.param.color = *color;
 
         f(&mut |vertices: &[f32]| {
-            renderer.update_buffer_vec(buffer_pos.clone(), vertices, 0);
+            renderer.update_buffer_vec(&buffer_pos, vertices, 0);
 
             let n = vertices.len() / POS_COMPONENTS;
             batch.slice = gfx::Slice {
@@ -394,8 +395,8 @@ for GfxGraphics<'a, D>
                 vertices.len() * UV_COMPONENTS,
                 texture_coords.len() * POS_COMPONENTS
             );
-            renderer.update_buffer_vec(buffer_pos.clone(), vertices, 0);
-            renderer.update_buffer_vec(buffer_uv.clone(), texture_coords, 0);
+            renderer.update_buffer_vec(&buffer_pos, vertices, 0);
+            renderer.update_buffer_vec(&buffer_uv, texture_coords, 0);
 
             let n = vertices.len() / POS_COMPONENTS;
             batch_uv.slice = gfx::Slice {
