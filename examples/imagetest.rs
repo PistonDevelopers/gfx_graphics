@@ -11,7 +11,7 @@ extern crate sdl2;
 
 use piston::quack::Get;
 use std::cell::RefCell;
-use gfx::{Device, DeviceExt};
+use gfx::traits::*;
 use gfx_graphics::{
     Gfx2d,
     Texture,
