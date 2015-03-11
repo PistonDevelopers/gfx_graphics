@@ -1,6 +1,6 @@
 //! Glyph caching
 
-use std::collections::hash_map::{HashMap, Entry};
+use std::collections::hash_map::{ HashMap, Entry };
 use freetype;
 use gfx;
 use graphics;
@@ -31,7 +31,7 @@ pub struct GlyphCache<R: gfx::Resources> {
 impl<R> GlyphCache<R> where R: gfx::Resources {
      /// Constructor for a GlyphCache.
      pub fn new<D: gfx::Factory<R>>(font: &Path, device: &mut D)
-                -> Result<GlyphCache<R>, Error> {
+                -> Result<Self, Error> {
         let freetype = match freetype::Library::init() {
             Ok(freetype) => freetype,
             Err(why) => return Err(Error::Freetype(why)),
@@ -69,7 +69,7 @@ impl<R> GlyphCache<R> where R: gfx::Resources {
 
     /// Generate all pending characters.
     pub fn update<D: gfx::Factory<R>>(&mut self, device: &mut D) {
-        let empty_handle = self.empty_texture.handle;
+        let empty_handle = self.empty_texture.handle.clone();
         for (&(size, ch), value) in self.data.iter_mut()
                 .filter(|&(_, ref c)| c.texture.handle == empty_handle) {
             self.face.set_pixel_sizes(0, size).unwrap();

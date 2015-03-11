@@ -1,10 +1,8 @@
-
 use std::marker::PhantomData;
 use gfx;
 use gfx::traits::*;
 use graphics::{ Context, DrawState, Graphics };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
-
 use Texture;
 
 static VERTEX_SHADER: [&'static [u8]; 2] = [
@@ -132,16 +130,21 @@ struct ParamsUV<R: gfx::Resources> {
 }
 
 /// The data used for drawing 2D graphics.
-pub struct Gfx2d<D: gfx::Device> {
-    buffer_pos: gfx::BufferHandle<D::Resources, f32>,
-    buffer_uv: gfx::BufferHandle<D::Resources, f32>,
-    batch: gfx::batch::OwnedBatch<Params<D::Resources>>,
-    batch_uv: gfx::batch::OwnedBatch<ParamsUV<D::Resources>>,
+pub struct Gfx2d<R: gfx::Resources> {
+    buffer_pos: gfx::BufferHandle<R, f32>,
+    buffer_uv: gfx::BufferHandle<R, f32>,
+    batch: gfx::batch::OwnedBatch<Params<R>>,
+    batch_uv: gfx::batch::OwnedBatch<ParamsUV<R>>,
 }
 
-impl<D: gfx::Device> Gfx2d<D> {
+impl<R: gfx::Resources> Gfx2d<R> {
     /// Creates a new G2D object.
-    pub fn new(device: &mut D) -> Gfx2d<D> {
+    pub fn new<D>(device: &mut D) -> Self
+        where D: gfx::Device
+               + gfx::Factory<R>
+    {
+        use gfx::traits::*;
+
         let shader_model = device.get_capabilities().shader_model;
 
         let vertex = gfx::ShaderSource {
@@ -186,14 +189,14 @@ impl<D: gfx::Device> Gfx2d<D> {
         let mut mesh = gfx::Mesh::new(BUFFER_SIZE as u32);
         mesh.attributes.extend(gfx::VertexFormat::generate(
             None::<&PositionFormat>,
-            buffer_pos.raw()
+            buffer_pos.raw().clone()
         ).into_iter());
 
         // Reuse parameters from `mesh`.
         let mut mesh_uv = mesh.clone();
         mesh_uv.attributes.extend(gfx::VertexFormat::generate(
             None::<&TexCoordsFormat>,
-            buffer_uv.raw()
+            buffer_uv.raw().clone()
         ).into_iter());
 
         let params = Params {
@@ -247,12 +250,15 @@ impl<D: gfx::Device> Gfx2d<D> {
     }
 
     /// Renders graphics to a Gfx renderer.
-    pub fn draw<F: FnMut(Context, &mut GfxGraphics<D>)>(
+    pub fn draw<C, F>(
         &mut self,
-        renderer: &mut gfx::Renderer<D::Resources, D::CommandBuffer>,
-        frame: &gfx::Frame<D::Resources>,
+        renderer: &mut gfx::Renderer<R, C>,
+        frame: &gfx::Frame<R>,
         mut f: F
-    ) {
+    )
+        where C: gfx::CommandBuffer<R>,
+              F: FnMut(Context, &mut GfxGraphics<R, C>)
+    {
         let ref mut g = GfxGraphics::new(
             renderer,
             frame,
@@ -267,30 +273,31 @@ impl<D: gfx::Device> Gfx2d<D> {
 }
 
 /// Used for rendering 2D graphics.
-pub struct GfxGraphics<'a, D>
-    where
-        D: 'a + gfx::Device,
-        <D as gfx::Device>::CommandBuffer: 'a,
-        <D as gfx::Device>::Resources: 'a,
-        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Sampler: 'a,
-        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Texture: 'a,
-        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Surface: 'a,
-        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::FrameBuffer: 'a,
-        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Program: 'a,
-        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Shader: 'a,
-        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::ArrayBuffer: 'a,
-        <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Buffer: 'a
+pub struct GfxGraphics<'a, R, C>
+    where R: gfx::Resources + 'a,
+          C: gfx::CommandBuffer<R> + 'a,
+          R::Buffer: 'a,
+          R::ArrayBuffer: 'a,
+          R::Shader: 'a,
+          R::Program: 'a,
+          R::FrameBuffer: 'a,
+          R::Surface: 'a,
+          R::Texture: 'a,
+          R::Sampler: 'a
 {
-    renderer: &'a mut gfx::Renderer<D::Resources, D::CommandBuffer>,
-    frame: &'a gfx::Frame<D::Resources>,
-    g2d: &'a mut Gfx2d<D>,
+    renderer: &'a mut gfx::Renderer<R, C>,
+    frame: &'a gfx::Frame<R>,
+    g2d: &'a mut Gfx2d<R>,
 }
 
-impl<'a, D: gfx::Device> GfxGraphics<'a, D> {
+impl<'a, R, C> GfxGraphics<'a, R, C>
+    where R: gfx::Resources + 'a,
+          C: gfx::CommandBuffer<R> + 'a
+{
     /// Creates a new object for rendering 2D graphics.
-    pub fn new(renderer: &'a mut gfx::Renderer<D::Resources, D::CommandBuffer>,
-               frame: &'a gfx::Frame<D::Resources>,
-               g2d: &'a mut Gfx2d<D>) -> GfxGraphics<'a, D> {
+    pub fn new(renderer: &'a mut gfx::Renderer<R, C>,
+               frame: &'a gfx::Frame<R>,
+               g2d: &'a mut Gfx2d<R>) -> Self {
         GfxGraphics {
             renderer: renderer,
             frame: frame,
@@ -299,20 +306,26 @@ impl<'a, D: gfx::Device> GfxGraphics<'a, D> {
     }
 
     /// Returns true if texture has alpha channel.
-    pub fn has_texture_alpha(&self, texture: &Texture<D::Resources>) -> bool {
+    pub fn has_texture_alpha(&self, texture: &Texture<R>) -> bool {
         use gfx::tex::Components::RGBA;
 
         texture.handle.get_info().format.get_components() == Some(RGBA)
     }
 }
 
-impl<'a, D: gfx::Device> Graphics
-for GfxGraphics<'a, D>
-    where
-        D::Resources: 'a,
-        <D as gfx::device::Device>::CommandBuffer: 'a,
+impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
+    where R: gfx::Resources + 'a,
+          C: gfx::CommandBuffer<R> + 'a,
+          R::Buffer: 'a,
+          R::ArrayBuffer: 'a,
+          R::Shader: 'a,
+          R::Program: 'a,
+          R::FrameBuffer: 'a,
+          R::Surface: 'a,
+          R::Texture: 'a,
+          R::Sampler: 'a
 {
-    type Texture = Texture<D::Resources>;
+    type Texture = Texture<R>;
 
     fn clear(&mut self, color: [f32; 4]) {
         let &mut GfxGraphics {
@@ -321,14 +334,14 @@ for GfxGraphics<'a, D>
             ..
         } = self;
         renderer.clear(
-                gfx::ClearData {
-                    color: color,
-                    depth: 0.0,
-                    stencil: 0,
-                },
-                gfx::COLOR,
-                frame
-            );
+            gfx::ClearData {
+                color: color,
+                depth: 0.0,
+                stencil: 0,
+            },
+            gfx::COLOR,
+            frame
+        );
     }
 
     fn tri_list<F>(
@@ -387,7 +400,7 @@ for GfxGraphics<'a, D>
         } = self;
 
         batch_uv.state = *draw_state;
-        batch_uv.param.s_texture.0 = texture.handle;
+        batch_uv.param.s_texture.0 = texture.handle.clone();
         batch_uv.param.color = *color;
 
         f(&mut |vertices: &[f32], texture_coords: &[f32]| {
