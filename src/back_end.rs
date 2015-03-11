@@ -1,6 +1,7 @@
 
 use std::marker::PhantomData;
 use gfx;
+use gfx::traits::*;
 use graphics::{ Context, DrawState, Graphics };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 
@@ -141,8 +142,6 @@ pub struct Gfx2d<D: gfx::Device> {
 impl<D: gfx::Device> Gfx2d<D> {
     /// Creates a new G2D object.
     pub fn new(device: &mut D) -> Gfx2d<D> {
-        use gfx::DeviceExt;
-
         let shader_model = device.get_capabilities().shader_model;
 
         let vertex = gfx::ShaderSource {
@@ -250,7 +249,7 @@ impl<D: gfx::Device> Gfx2d<D> {
     /// Renders graphics to a Gfx renderer.
     pub fn draw<F: FnMut(Context, &mut GfxGraphics<D>)>(
         &mut self,
-        renderer: &mut gfx::Renderer<D::CommandBuffer>,
+        renderer: &mut gfx::Renderer<D::Resources, D::CommandBuffer>,
         frame: &gfx::Frame<D::Resources>,
         mut f: F
     ) {
@@ -272,7 +271,6 @@ pub struct GfxGraphics<'a, D>
     where
         D: 'a + gfx::Device,
         <D as gfx::Device>::CommandBuffer: 'a,
-        <D as gfx::Device>::Mapper: 'a,
         <D as gfx::Device>::Resources: 'a,
         <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Sampler: 'a,
         <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Texture: 'a,
@@ -283,14 +281,14 @@ pub struct GfxGraphics<'a, D>
         <<D as gfx::device::Device>::Resources as gfx::device::Resources>::ArrayBuffer: 'a,
         <<D as gfx::device::Device>::Resources as gfx::device::Resources>::Buffer: 'a
 {
-    renderer: &'a mut gfx::Renderer<D::CommandBuffer>,
+    renderer: &'a mut gfx::Renderer<D::Resources, D::CommandBuffer>,
     frame: &'a gfx::Frame<D::Resources>,
     g2d: &'a mut Gfx2d<D>,
 }
 
 impl<'a, D: gfx::Device> GfxGraphics<'a, D> {
     /// Creates a new object for rendering 2D graphics.
-    pub fn new(renderer: &'a mut gfx::Renderer<D::CommandBuffer>,
+    pub fn new(renderer: &'a mut gfx::Renderer<D::Resources, D::CommandBuffer>,
                frame: &'a gfx::Frame<D::Resources>,
                g2d: &'a mut Gfx2d<D>) -> GfxGraphics<'a, D> {
         GfxGraphics {
@@ -313,7 +311,7 @@ for GfxGraphics<'a, D>
     where
         D::Resources: 'a,
 {
-    type Texture = Texture<D>;
+    type Texture = Texture<D::Resources>;
 
     fn clear(&mut self, color: [f32; 4]) {
         let &mut GfxGraphics {
