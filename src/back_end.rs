@@ -4,102 +4,7 @@ use gfx::traits::*;
 use graphics::{ Context, DrawState, Graphics };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use Texture;
-
-static VERTEX_SHADER: [&'static [u8]; 2] = [
-b"#version 120
-uniform vec4 color;
-
-attribute vec2 pos;
-
-void main() {
-    gl_Position = vec4(pos, 0.0, 1.0);
-}
-",
-b"#version 150 core
-uniform vec4 color;
-
-in vec2 pos;
-
-void main() {
-    gl_Position = vec4(pos, 0.0, 1.0);
-}
-"
-];
-
-static FRAGMENT_SHADER: [&'static [u8]; 2] = [
-b"#version 120
-uniform vec4 color;
-
-void main() {
-    gl_FragColor = color;
-}
-",
-b"#version 150 core
-uniform vec4 color;
-
-out vec4 o_Color;
-
-void main() {
-    o_Color = color;
-}
-"
-];
-
-static VERTEX_SHADER_UV: [&'static [u8]; 2] = [
-b"#version 120
-uniform sampler2D s_texture;
-uniform vec4 color;
-
-attribute vec2 pos;
-attribute vec2 uv;
-
-varying vec2 v_UV;
-
-void main() {
-    v_UV = uv;
-    gl_Position = vec4(pos, 0.0, 1.0);
-}
-",
-b"#version 150 core
-uniform sampler2D s_texture;
-uniform vec4 color;
-
-in vec2 pos;
-in vec2 uv;
-out vec2 v_UV;
-void main() {
-    v_UV = uv;
-    gl_Position = vec4(pos, 0.0, 1.0);
-}
-"
-];
-
-static FRAGMENT_SHADER_UV: [&'static [u8]; 2] = [
-b"#version 120
-uniform sampler2D s_texture;
-uniform vec4 color;
-
-varying vec2 v_UV;
-
-void main()
-{
-    gl_FragColor = texture2D(s_texture, v_UV) * color;
-}
-",
-b"#version 150 core
-uniform sampler2D s_texture;
-uniform vec4 color;
-
-out vec4 o_Color;
-
-in vec2 v_UV;
-
-void main()
-{
-    o_Color = texture(s_texture, v_UV) * color;
-}
-"
-];
+use shaders;
 
 static POS_COMPONENTS: usize = 2;
 static UV_COMPONENTS: usize = 2;
@@ -148,13 +53,13 @@ impl<R: gfx::Resources> Gfx2d<R> {
         let shader_model = device.get_capabilities().shader_model;
 
         let vertex = gfx::ShaderSource {
-            glsl_120: Some(VERTEX_SHADER[0]),
-            glsl_150: Some(VERTEX_SHADER[1]),
+            glsl_120: Some(shaders::VERTEX_SHADER[0]),
+            glsl_150: Some(shaders::VERTEX_SHADER[1]),
             .. gfx::ShaderSource::empty()
         };
         let fragment = gfx::ShaderSource {
-            glsl_120: Some(FRAGMENT_SHADER[0]),
-            glsl_150: Some(FRAGMENT_SHADER[1]),
+            glsl_120: Some(shaders::FRAGMENT_SHADER[0]),
+            glsl_150: Some(shaders::FRAGMENT_SHADER[1]),
             .. gfx::ShaderSource::empty()
         };
 
@@ -164,13 +69,13 @@ impl<R: gfx::Resources> Gfx2d<R> {
             .unwrap();
 
         let vertex = gfx::ShaderSource {
-            glsl_120: Some(VERTEX_SHADER_UV[0]),
-            glsl_150: Some(VERTEX_SHADER_UV[1]),
+            glsl_120: Some(shaders::VERTEX_SHADER_UV[0]),
+            glsl_150: Some(shaders::VERTEX_SHADER_UV[1]),
             .. gfx::ShaderSource::empty()
         };
         let fragment = gfx::ShaderSource {
-            glsl_120: Some(FRAGMENT_SHADER_UV[0]),
-            glsl_150: Some(FRAGMENT_SHADER_UV[1]),
+            glsl_120: Some(shaders::FRAGMENT_SHADER_UV[0]),
+            glsl_150: Some(shaders::FRAGMENT_SHADER_UV[1]),
             .. gfx::ShaderSource::empty()
         };
 
