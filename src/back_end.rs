@@ -6,8 +6,8 @@ use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use Texture;
 use shaders;
 
-static POS_COMPONENTS: usize = 2;
-static UV_COMPONENTS: usize = 2;
+const POS_COMPONENTS: usize = 2;
+const UV_COMPONENTS: usize = 2;
 
 // Boiler plate for automatic attribute construction.
 // Needs to be improved on gfx-rs side.
@@ -130,7 +130,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
         let texture = device.create_texture(texture_info)
             .unwrap();
         device.update_texture(&texture, &image_info,
-                &[0x20u8, 0xA0u8, 0xC0u8, 0x00u8])
+                &[0x20u8, 0xA0, 0xC0, 0x00])
             .unwrap();
         let params_uv = ParamsUV {
             color: [1.0; 4],
@@ -196,8 +196,8 @@ pub struct GfxGraphics<'a, R, C>
 }
 
 impl<'a, R, C> GfxGraphics<'a, R, C>
-    where R: gfx::Resources + 'a,
-          C: gfx::CommandBuffer<R> + 'a
+    where R: gfx::Resources,
+          C: gfx::CommandBuffer<R>
 {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(renderer: &'a mut gfx::Renderer<R, C>,
@@ -219,8 +219,8 @@ impl<'a, R, C> GfxGraphics<'a, R, C>
 }
 
 impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
-    where R: gfx::Resources + 'a,
-          C: gfx::CommandBuffer<R> + 'a,
+    where R: gfx::Resources,
+          C: gfx::CommandBuffer<R>,
           R::Buffer: 'a,
           R::ArrayBuffer: 'a,
           R::Shader: 'a,

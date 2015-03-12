@@ -51,7 +51,7 @@ impl<R> GlyphCache<R> where R: gfx::Resources {
             };
             let image_info = tinfo.to_image_info();
             match device.create_texture(tinfo) {
-                Ok(t) => match device.update_texture(&t, &image_info, &[0u8, 0, 0, 0]) {
+                Ok(t) => match device.update_texture(&t, &image_info, &[0u8; 4]) {
                     Ok(()) => t,
                     Err(e) => return Err(Error::Texture(e)),
                 },
@@ -109,8 +109,8 @@ impl<R: gfx::Resources> graphics::character::CharacterCache for GlyphCache<R> {
             Entry::Occupied(v) => v.into_mut(),
             Entry::Vacant(v) => {
                 v.insert(graphics::character::Character {
-                    offset: [0.0, 0.0],
-                    size: [1.0, 1.0],
+                    offset: [0.0; 2],
+                    size: [1.0; 2],
                     texture: ::Texture {
                         handle: self.empty_texture.handle.clone()
                     },
