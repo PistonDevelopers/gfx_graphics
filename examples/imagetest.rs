@@ -48,16 +48,20 @@ fn main() {
             use graphics::RelativeTransform;
 
             g2d.draw(&mut renderer, &frame, |c, g| {
+                let transform = c.transform.trans(100.0, 100.0);
+
                 graphics::clear([1.0; 4], g);
                 graphics::Rectangle::new([1.0, 0.0, 0.0, 1.0])
-                    .draw([0.0, 0.0, 100.0, 100.0], &c, g);
+                    .draw([0.0, 0.0, 100.0, 100.0],
+                          &c.draw_state,
+                          c.transform,
+                          g);
                 graphics::Rectangle::new([0.0, 1.0, 0.0, 0.3])
-                    .draw(
-                        [50.0, 50.0, 100.0, 100.0],
-                        &c,
-                        g
-                    );
-                graphics::image(&image, &c.trans(100.0, 100.0), g);
+                    .draw([50.0, 50.0, 100.0, 100.0],
+                          &c.draw_state,
+                          c.transform,
+                          g);
+                graphics::image(&image, transform, g);
             });
 
             device.submit(renderer.as_buffer());
