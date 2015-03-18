@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-#![feature(plugin, old_path, std_misc, custom_attribute)]
+#![feature(plugin, std_misc, custom_attribute)]
 #![plugin(gfx_macros)]
 
 //! The implementation of a Rust-Graphics back-end using gfx-rs.
