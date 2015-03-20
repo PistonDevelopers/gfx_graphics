@@ -1,7 +1,6 @@
 #![feature(old_path)]
 
 extern crate piston;
-extern crate shader_version;
 extern crate graphics;
 extern crate sdl2_window;
 extern crate gfx;
@@ -15,12 +14,11 @@ use gfx_graphics::{
     Gfx2d,
     Texture,
 };
-use sdl2_window::Sdl2Window;
+use sdl2_window::{ Sdl2Window, OpenGL };
 
 fn main() {
-    let opengl = shader_version::OpenGL::_3_2;
     let window = Sdl2Window::new(
-        opengl,
+        OpenGL::_3_2,
         piston::window::WindowSettings {
             title: "gfx_graphics: imagetest".to_string(),
             size: [300, 300],
