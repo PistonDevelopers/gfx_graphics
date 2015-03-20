@@ -1,10 +1,8 @@
 use std::marker::PhantomData;
-use gfx;
-use gfx::traits::*;
 use graphics::{ Context, DrawState, Graphics };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
-use Texture;
-use shaders;
+use { Texture, shaders };
+use gfx_lib as gfx;
 
 const POS_COMPONENTS: usize = 2;
 const UV_COMPONENTS: usize = 2;
@@ -48,7 +46,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
         where D: gfx::Device
                + gfx::Factory<R>
     {
-        use gfx::traits::*;
+        use gfx_lib::traits::*;
 
         let shader_model = device.get_capabilities().shader_model;
 
@@ -212,7 +210,7 @@ impl<'a, R, C> GfxGraphics<'a, R, C>
 
     /// Returns true if texture has alpha channel.
     pub fn has_texture_alpha(&self, texture: &Texture<R>) -> bool {
-        use gfx::tex::Components::RGBA;
+        use gfx_lib::tex::Components::RGBA;
 
         texture.handle.get_info().format.get_components() == Some(RGBA)
     }

@@ -1,9 +1,8 @@
 //! Glyph caching
 
 use std::collections::hash_map::{ HashMap, Entry };
-use freetype;
-use gfx;
-use graphics;
+use { freetype, graphics };
+use gfx_lib as gfx;
 
 /// The type alias for the font size.
 pub type FontSize = u32;
