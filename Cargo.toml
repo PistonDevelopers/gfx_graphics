@@ -51,10 +51,6 @@ git = "https://github.com/pistondevelopers/piston"
 git = "https://github.com/pistondevelopers/sdl2_window"
 #version = "0.0.0"
 
-[dev-dependencies.sdl2]
-git = "https://github.com/AngryLawyer/rust-sdl2"
-#version = "0.0.18"
-
 [dev-dependencies.gfx_device_gl]
 git = "https://github.com/gfx-rs/gfx_device_gl"
 #version = "0.2.0"
