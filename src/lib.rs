@@ -4,18 +4,22 @@
 
 //! The implementation of a Rust-Graphics back-end using gfx-rs.
 
-extern crate gfx;
+extern crate "gfx" as gfx_lib;
 extern crate gfx_texture;
 extern crate graphics;
 extern crate image;
 extern crate freetype;
 
+/// Reexports from gfx's crate.
+pub mod gfx {
+    pub use gfx_lib::traits;
+    pub use gfx_lib::Frame;
+}
 pub use gfx_texture::Texture;
 
-pub use back_end::Gfx2d;
-pub use back_end::GfxGraphics;
-pub use back_end::Gfx2d as G2D;
-pub use back_end::GfxGraphics as GraphicsBackEnd;
+pub use back_end::{ Gfx2d, GfxGraphics };
+pub use Gfx2d as G2D;
+pub use GfxGraphics as GraphicsBackEnd;
 pub use glyph::GlyphCache;
 
 mod back_end;

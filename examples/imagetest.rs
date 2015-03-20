@@ -3,16 +3,16 @@
 extern crate piston;
 extern crate graphics;
 extern crate sdl2_window;
-extern crate gfx;
 extern crate gfx_device_gl;
 extern crate gfx_graphics;
 
 use piston::quack::Get;
 use std::cell::RefCell;
-use gfx::traits::*;
+use gfx_graphics::gfx::traits::*;
 use gfx_graphics::{
     Gfx2d,
     Texture,
+    gfx
 };
 use sdl2_window::{ Sdl2Window, OpenGL };
 
