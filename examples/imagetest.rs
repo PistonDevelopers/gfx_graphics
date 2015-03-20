@@ -7,7 +7,6 @@ extern crate sdl2_window;
 extern crate gfx;
 extern crate gfx_device_gl;
 extern crate gfx_graphics;
-extern crate sdl2;
 
 use piston::quack::Get;
 use std::cell::RefCell;
@@ -31,9 +30,7 @@ fn main() {
         }
     );
 
-    let mut device = gfx_device_gl::GlDevice::new(|s| unsafe {
-        std::mem::transmute(sdl2::video::gl_get_proc_address(s))
-    });
+    let mut device = gfx_device_gl::GlDevice::new(Sdl2Window::get_proc_address);
     let piston::window::Size([w, h]) = window.get();
     let frame = gfx::Frame::new(w as u16, h as u16);
     let mut renderer = device.create_renderer();
