@@ -40,7 +40,7 @@ fn main() {
     for e in piston::events(&window) {
         use piston::event::RenderEvent;
         if let Some(_) = e.render_args() {
-            use graphics::RelativeTransform;
+            use graphics::Transformed;
 
             g2d.draw(&mut renderer, &frame, |c, g| {
                 let transform = c.transform.trans(100.0, 100.0);
