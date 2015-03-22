@@ -33,30 +33,30 @@ fn main() {
     let frame = gfx::Frame::new(w as u16, h as u16);
     let mut renderer = device.create_renderer();
 
-    let image = Texture::from_path(&mut device,
+    let rust_logo = Texture::from_path(&mut device,
         &Path::new("./assets/rust.png")).unwrap();
     let mut g2d = Gfx2d::new(&mut device);
     let window = RefCell::new(window);
     for e in piston::events(&window) {
         use piston::event::RenderEvent;
         if let Some(_) = e.render_args() {
-            use graphics::Transformed;
+            use graphics::*;
 
             g2d.draw(&mut renderer, &frame, |c, g| {
                 let transform = c.transform.trans(100.0, 100.0);
 
-                graphics::clear([1.0; 4], g);
-                graphics::Rectangle::new([1.0, 0.0, 0.0, 1.0])
+                clear([1.0; 4], g);
+                Rectangle::new([1.0, 0.0, 0.0, 1.0])
                     .draw([0.0, 0.0, 100.0, 100.0],
                           &c.draw_state,
                           c.transform,
                           g);
-                graphics::Rectangle::new([0.0, 1.0, 0.0, 0.3])
+                Rectangle::new([0.0, 1.0, 0.0, 0.3])
                     .draw([50.0, 50.0, 100.0, 100.0],
                           &c.draw_state,
                           c.transform,
                           g);
-                graphics::image(&image, transform, g);
+                image(&rust_logo, transform, g);
             });
 
             device.submit(renderer.as_buffer());
