@@ -20,7 +20,7 @@ fn main() {
     let window = Sdl2Window::new(
         OpenGL::_3_2,
         piston::window::WindowSettings {
-            title: "gfx_graphics: imagetest".to_string(),
+            title: "gfx_graphics: image_test".to_string(),
             size: [300, 300],
             fullscreen: false,
             exit_on_esc: true,
