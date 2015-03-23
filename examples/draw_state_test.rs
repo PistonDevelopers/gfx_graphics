@@ -6,6 +6,8 @@ extern crate sdl2_window;
 extern crate gfx_device_gl;
 extern crate gfx_graphics;
 
+use std::old_path::*;
+
 use piston::quack::Get;
 use std::cell::RefCell;
 use gfx_graphics::gfx::traits::*;
@@ -38,7 +40,8 @@ fn main() {
     let mut g2d = Gfx2d::new(&mut device);
     let window = RefCell::new(window);
     for e in piston::events(&window) {
-        use piston::event::RenderEvent;
+        use piston::event::*;
+
         if let Some(_) = e.render_args() {
             use graphics::*;
 
@@ -61,6 +64,10 @@ fn main() {
 
             device.submit(renderer.as_buffer());
             renderer.reset();
-       }
+        }
+
+        if let Some(_) = e.after_render_args() {
+            device.after_frame();
+        }
     }
 }
