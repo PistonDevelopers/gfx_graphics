@@ -1,6 +1,6 @@
 //! Glyph caching
 
-use std::old_path::*;
+use std::path::Path;
 
 use std::collections::hash_map::{ HashMap, Entry };
 use { freetype, graphics };
