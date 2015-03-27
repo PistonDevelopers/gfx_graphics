@@ -1,15 +1,12 @@
-#![feature(old_path)]
-
 extern crate piston;
 extern crate graphics;
 extern crate sdl2_window;
 extern crate gfx_device_gl;
 extern crate gfx_graphics;
 
-use std::old_path::*;
-
-use piston::quack::Get;
+use std::path::Path;
 use std::cell::RefCell;
+use piston::quack::Get;
 use gfx_graphics::gfx::traits::*;
 use gfx_graphics::{
     Gfx2d,
