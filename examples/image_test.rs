@@ -28,8 +28,8 @@ fn main() {
     );
 
     let mut device = gfx_device_gl::GlDevice::new(Sdl2Window::get_proc_address);
-    let piston::window::Size([w, h]) = window.get();
-    let frame = gfx::Frame::new(w as u16, h as u16);
+    let piston::window::Size(size) = window.get();
+    let frame = gfx::Frame::new(size[0] as u16, size[1] as u16);
     let mut renderer = device.create_renderer();
 
     let rust_logo = Texture::from_path(&mut device,
