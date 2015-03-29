@@ -47,6 +47,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
                + gfx::Factory<R>
     {
         use gfx_lib::traits::*;
+        use gfx_lib::VertexFormat;
 
         let shader_model = device.get_capabilities().shader_model;
 
@@ -93,7 +94,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let mut mesh = gfx::Mesh::new(BUFFER_SIZE as u32);
         mesh.attributes.extend(
-            <PositionFormat as gfx::VertexFormat>::generate(
+            PositionFormat::generate(
                 buffer_pos.raw().clone()
             )
         );
@@ -101,7 +102,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
         // Reuse parameters from `mesh`.
         let mut mesh_uv = mesh.clone();
         mesh_uv.attributes.extend(
-            <TexCoordsFormat as gfx::VertexFormat>::generate(
+            TexCoordsFormat::generate(
                 buffer_uv.raw().clone()
             )
         );
