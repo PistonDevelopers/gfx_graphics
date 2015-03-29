@@ -63,8 +63,8 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let program = device.link_program(
             vertex.choose(shader_model).unwrap(),
-            fragment.choose(shader_model).unwrap())
-            .unwrap();
+            fragment.choose(shader_model).unwrap()
+        ).unwrap();
 
         let vertex = gfx::ShaderSource {
             glsl_120: Some(shaders::VERTEX_SHADER_UV[0]),
@@ -79,40 +79,48 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let program_uv = device.link_program(
             vertex.choose(shader_model).unwrap(),
-            fragment.choose(shader_model).unwrap())
-            .unwrap();
+            fragment.choose(shader_model).unwrap()
+        ).unwrap();
 
         let buffer_pos = device.create_buffer(
             POS_COMPONENTS * BUFFER_SIZE,
-            gfx::BufferUsage::Dynamic);
+            gfx::BufferUsage::Dynamic
+        );
         let buffer_uv = device.create_buffer(
             UV_COMPONENTS * BUFFER_SIZE,
-            gfx::BufferUsage::Dynamic);
+            gfx::BufferUsage::Dynamic
+        );
 
         let mut mesh = gfx::Mesh::new(BUFFER_SIZE as u32);
-        mesh.attributes.extend(gfx::VertexFormat::generate(
-            None::<&PositionFormat>,
-            buffer_pos.raw().clone()
-        ).into_iter());
+        mesh.attributes.extend(
+            <PositionFormat as gfx::VertexFormat>::generate(
+                buffer_pos.raw().clone()
+            )
+        );
 
         // Reuse parameters from `mesh`.
         let mut mesh_uv = mesh.clone();
-        mesh_uv.attributes.extend(gfx::VertexFormat::generate(
-            None::<&TexCoordsFormat>,
-            buffer_uv.raw().clone()
-        ).into_iter());
+        mesh_uv.attributes.extend(
+            <TexCoordsFormat as gfx::VertexFormat>::generate(
+                buffer_uv.raw().clone()
+            )
+        );
 
         let params = Params {
             color: [1.0; 4],
             _dummy: PhantomData,
         };
-        let mut batch = gfx::batch::OwnedBatch::new(mesh, program, params)
-            .unwrap();
+        let mut batch = gfx::batch::OwnedBatch::new(
+            mesh,
+            program,
+            params
+        ).unwrap();
 
         let sampler = device.create_sampler(
             gfx::tex::SamplerInfo::new(
                 gfx::tex::FilterMethod::Trilinear,
-                gfx::tex::WrapMode::Clamp)
+                gfx::tex::WrapMode::Clamp
+            )
         );
 
         // Create a dummy texture
@@ -125,18 +133,23 @@ impl<R: gfx::Resources> Gfx2d<R> {
             format: gfx::tex::RGBA8,
         };
         let image_info = texture_info.to_image_info();
-        let texture = device.create_texture(texture_info)
-            .unwrap();
-        device.update_texture(&texture, &image_info,
-                &[0x20u8, 0xA0, 0xC0, 0x00])
-            .unwrap();
+        let texture = device.create_texture(texture_info).unwrap();
+
+        device.update_texture(
+            &texture,
+            &image_info,
+            &[0x20u8, 0xA0, 0xC0, 0x00]
+        ).unwrap();
+
         let params_uv = ParamsUV {
             color: [1.0; 4],
             s_texture: (texture, Some(sampler))
         };
         let mut batch_uv = gfx::batch::OwnedBatch::new(
-            mesh_uv, program_uv, params_uv)
-            .unwrap();
+            mesh_uv,
+            program_uv,
+            params_uv
+        ).unwrap();
 
         // Disable culling.
         batch.state.primitive.method =
@@ -277,7 +290,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                     start: 0,
                     end: n as u32,
                     kind: gfx::SliceKind::Vertex
-                };
+            };
             let _ = renderer.draw(batch, *frame);
         })
     }
@@ -320,7 +333,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                     start: 0,
                     end: n as u32,
                     kind: gfx::SliceKind::Vertex
-                };
+            };
             let _ = renderer.draw(batch_uv, *frame);
         })
     }

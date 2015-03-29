@@ -1,4 +1,4 @@
-pub static VERTEX_SHADER: [&'static [u8]; 2] = [
+pub const VERTEX_SHADER: [&'static [u8]; 2] = [
 b"#version 120
 uniform vec4 color;
 
@@ -19,7 +19,7 @@ void main() {
 "
 ];
 
-pub static FRAGMENT_SHADER: [&'static [u8]; 2] = [
+pub const FRAGMENT_SHADER: [&'static [u8]; 2] = [
 b"#version 120
 uniform vec4 color;
 
@@ -38,7 +38,7 @@ void main() {
 "
 ];
 
-pub static VERTEX_SHADER_UV: [&'static [u8]; 2] = [
+pub const VERTEX_SHADER_UV: [&'static [u8]; 2] = [
 b"#version 120
 uniform sampler2D s_texture;
 uniform vec4 color;
@@ -67,7 +67,7 @@ void main() {
 "
 ];
 
-pub static FRAGMENT_SHADER_UV: [&'static [u8]; 2] = [
+pub const FRAGMENT_SHADER_UV: [&'static [u8]; 2] = [
 b"#version 120
 uniform sampler2D s_texture;
 uniform vec4 color;
