@@ -5,6 +5,7 @@ extern crate gfx_device_gl;
 extern crate gfx_graphics;
 
 use std::path::Path;
+use std::rc::Rc;
 use std::cell::RefCell;
 use piston::quack::Get;
 use gfx_graphics::gfx::traits::*;
@@ -35,8 +36,8 @@ fn main() {
     let rust_logo = Texture::from_path(&mut device,
         &Path::new("./assets/rust.png")).unwrap();
     let mut g2d = Gfx2d::new(&mut device);
-    let window = RefCell::new(window);
-    for e in piston::events(&window) {
+    let window = Rc::new(RefCell::new(window));
+    for e in piston::events(window) {
         use piston::event::*;
 
         if let Some(_) = e.render_args() {
