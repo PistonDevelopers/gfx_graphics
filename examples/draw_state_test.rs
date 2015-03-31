@@ -17,6 +17,10 @@ use gfx_graphics::{
 use sdl2_window::{ Sdl2Window, OpenGL };
 
 fn main() {
+    use graphics::draw_state::BlendPreset;
+
+    println!("Press A to change blending");
+
     let window = Sdl2Window::new(
         OpenGL::_3_2,
         piston::window::WindowSettings {
@@ -36,9 +40,11 @@ fn main() {
     let rust_logo = Texture::from_path(&mut device,
         &Path::new("./assets/rust.png")).unwrap();
     let mut g2d = Gfx2d::new(&mut device);
+    let mut blend = BlendPreset::Alpha;
     let window = Rc::new(RefCell::new(window));
     for e in piston::events(window) {
         use piston::event::*;
+        use piston::input::*;
 
         if let Some(_) = e.render_args() {
             use graphics::*;
@@ -46,22 +52,33 @@ fn main() {
             g2d.draw(&mut renderer, &frame, |c, g| {
                 let transform = c.transform.trans(100.0, 100.0);
 
-                clear([1.0; 4], g);
+                clear([0.8, 0.8, 0.8, 1.0], g);
                 Rectangle::new([1.0, 0.0, 0.0, 1.0])
                     .draw([0.0, 0.0, 100.0, 100.0],
                           &c.draw_state,
                           c.transform,
                           g);
-                Rectangle::new([0.0, 1.0, 0.0, 0.3])
+
+                let draw_state = c.draw_state.blend(blend);
+                Rectangle::new([0.5, 1.0, 0.0, 0.3])
                     .draw([50.0, 50.0, 100.0, 100.0],
-                          &c.draw_state,
+                          &draw_state,
                           c.transform,
                           g);
-                image(&rust_logo, transform, g);
+                Image::new().draw(&rust_logo, &c.draw_state, transform, g);
             });
 
             device.submit(renderer.as_buffer());
             renderer.reset();
+        }
+
+        if let Some(Button::Keyboard(Key::A)) = e.press_args() {
+            blend = match blend {
+                BlendPreset::Alpha => BlendPreset::Additive,
+                BlendPreset::Additive => BlendPreset::Multiplicative,
+                BlendPreset::Multiplicative => BlendPreset::Alpha,
+            };
+            println!("Changed blending to {:?}", blend);
         }
 
         if let Some(_) = e.after_render_args() {
