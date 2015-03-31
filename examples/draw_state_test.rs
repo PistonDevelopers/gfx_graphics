@@ -74,9 +74,10 @@ fn main() {
 
         if let Some(Button::Keyboard(Key::A)) = e.press_args() {
             blend = match blend {
-                BlendPreset::Alpha => BlendPreset::Additive,
-                BlendPreset::Additive => BlendPreset::Multiplicative,
-                BlendPreset::Multiplicative => BlendPreset::Alpha,
+                BlendPreset::Alpha => BlendPreset::Add,
+                BlendPreset::Add => BlendPreset::Multiply,
+                BlendPreset::Multiply => BlendPreset::Invert,
+                BlendPreset::Invert => BlendPreset::Alpha,
             };
             println!("Changed blending to {:?}", blend);
         }
