@@ -9,19 +9,15 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use piston::quack::Get;
 use gfx_graphics::gfx::traits::*;
-use gfx_graphics::{
-    Gfx2d,
-    Texture,
-    gfx
-};
-use sdl2_window::{ Sdl2Window, OpenGL };
+use gfx_graphics::{ Gfx2d, Texture, gfx };
+use sdl2_window::{ Sdl2Window, OpenGL, OpenGLWindow };
 
 fn main() {
     use graphics::draw_state::BlendPreset;
 
     println!("Press A to change blending");
 
-    let window = Sdl2Window::new(
+    let mut window = Sdl2Window::new(
         OpenGL::_3_2,
         piston::window::WindowSettings {
             title: "gfx_graphics: draw_state_test".to_string(),
@@ -32,7 +28,7 @@ fn main() {
         }
     );
 
-    let mut device = gfx_device_gl::GlDevice::new(Sdl2Window::get_proc_address);
+    let mut device = gfx_device_gl::GlDevice::new(|s| window.get_proc_address(s));
     let piston::window::Size(size) = window.get();
     let frame = gfx::Frame::new(size[0] as u16, size[1] as u16);
     let mut renderer = device.create_renderer();
