@@ -9,7 +9,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use piston::quack::Get;
 use gfx_graphics::gfx::traits::*;
-use gfx_graphics::{ Gfx2d, Texture, gfx };
+use gfx_graphics::{ Gfx2d, Texture, gfx, TextureSettings };
 use sdl2_window::{ Sdl2Window, OpenGL, OpenGLWindow };
 
 fn main() {
@@ -30,7 +30,8 @@ fn main() {
     let mut renderer = device.create_renderer();
 
     let rust_logo = Texture::from_path(&mut device,
-        &Path::new("./assets/rust.png")).unwrap();
+                                       &Path::new("./assets/rust.png"),
+                                       &TextureSettings::new()).unwrap();
     let mut g2d = Gfx2d::new(&mut device);
     let window = Rc::new(RefCell::new(window));
     for e in piston::events(window) {
