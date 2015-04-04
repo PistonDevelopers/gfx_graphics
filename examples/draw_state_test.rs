@@ -7,7 +7,7 @@ extern crate gfx_graphics;
 use std::path::Path;
 use std::rc::Rc;
 use std::cell::RefCell;
-use piston::quack::Get;
+use piston::window::{ Window, WindowSettings, Size };
 use gfx_graphics::gfx::traits::*;
 use gfx_graphics::{ Gfx2d, Texture, gfx, TextureSettings };
 use sdl2_window::{ Sdl2Window, OpenGL, OpenGLWindow };
@@ -19,18 +19,16 @@ fn main() {
 
     let mut window = Sdl2Window::new(
         OpenGL::_3_2,
-        piston::window::WindowSettings {
-            title: "gfx_graphics: draw_state_test".to_string(),
-            size: [300, 300],
-            fullscreen: false,
-            exit_on_esc: true,
-            samples: 0,
-        }
+        WindowSettings::new(
+            "gfx_graphics: draw_state_test".to_string(),
+            Size { width: 300, height: 300 }
+        )
+        .exit_on_esc(true)
     );
 
     let mut device = gfx_device_gl::GlDevice::new(|s| window.get_proc_address(s));
-    let piston::window::Size(size) = window.get();
-    let frame = gfx::Frame::new(size[0] as u16, size[1] as u16);
+    let size = window.size();
+    let frame = gfx::Frame::new(size.width as u16, size.height as u16);
     let mut renderer = device.create_renderer();
 
     let rust_logo = Texture::from_path(&mut device,
