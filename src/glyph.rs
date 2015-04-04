@@ -12,7 +12,7 @@ pub type FontSize = u32;
 pub type Character<D> = graphics::character::Character<::Texture<D>>;
 
 /// An enum to represent various possible run-time errors that may occur.
-#[derive(Copy, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Error {
     /// An error happened when creating a gfx texture.
     Texture(gfx::tex::TextureError),
