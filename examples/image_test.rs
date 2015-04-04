@@ -7,10 +7,10 @@ extern crate gfx_graphics;
 use std::path::Path;
 use std::rc::Rc;
 use std::cell::RefCell;
-use piston::window::{ Window, WindowSettings, Size };
+use piston::window::{ Window, WindowSettings, Size, OpenGLWindow };
 use gfx_graphics::gfx::traits::*;
 use gfx_graphics::{ Gfx2d, Texture, gfx, TextureSettings };
-use sdl2_window::{ Sdl2Window, OpenGL, OpenGLWindow };
+use sdl2_window::{ Sdl2Window, OpenGL };
 
 fn main() {
     let mut window = Sdl2Window::new(
