@@ -51,7 +51,8 @@ impl<R> GlyphCache<R> where R: gfx::Resources {
             };
             let image_info = tinfo.to_image_info();
             match device.create_texture(tinfo) {
-                Ok(t) => match device.update_texture(&t, &image_info, &[0u8; 4]) {
+                Ok(t) => match device.update_texture(&t, &image_info, &[0u8; 4],
+                                                     Some(gfx::tex::TextureKind::Texture2D)) {
                     Ok(()) => t,
                     Err(e) => return Err(Error::Texture(e)),
                 },

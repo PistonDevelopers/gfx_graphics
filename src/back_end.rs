@@ -139,7 +139,8 @@ impl<R: gfx::Resources> Gfx2d<R> {
         device.update_texture(
             &texture,
             &image_info,
-            &[0x20u8, 0xA0, 0xC0, 0x00]
+            &[0x20u8, 0xA0, 0xC0, 0x00],
+            Some(gfx::tex::TextureKind::Texture2D)
         ).unwrap();
 
         let params_uv = ParamsUV {
