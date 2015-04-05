@@ -60,7 +60,11 @@ fn main() {
                           &draw_state,
                           c.transform,
                           g);
-                Image::new().draw(&rust_logo, &c.draw_state, transform, g);
+
+                let clipped = DrawState { scissor: Some(
+                    ::graphics::draw_state::target::Rect { x: 100, y: 100, w: 100, h: 100 }
+                ), ..c.draw_state };
+                Image::new().draw(&rust_logo, &clipped, transform, g);
             });
 
             device.submit(renderer.as_buffer());
