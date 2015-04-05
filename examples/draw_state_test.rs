@@ -61,9 +61,7 @@ fn main() {
                           c.transform,
                           g);
 
-                let clipped = DrawState { scissor: Some(
-                    ::graphics::draw_state::target::Rect { x: 100, y: 100, w: 100, h: 100 }
-                ), ..c.draw_state };
+                let clipped = c.draw_state.scissor(100, 100, 100, 100);
                 Image::new().draw(&rust_logo, &clipped, transform, g);
             });
 
