@@ -22,15 +22,15 @@ fn main() {
         .exit_on_esc(true)
     );
 
-    let mut device = gfx_device_gl::GlDevice::new(|s| window.get_proc_address(s));
+    let (mut device, mut factory) = gfx_device_gl::create(|s| window.get_proc_address(s));
     let size = window.size();
     let frame = gfx::Frame::new(size.width as u16, size.height as u16);
-    let mut renderer = device.create_renderer();
+    let mut renderer = factory.create_renderer();
 
-    let rust_logo = Texture::from_path(&mut device,
+    let rust_logo = Texture::from_path(&mut factory,
                                        &Path::new("./assets/rust.png"),
                                        &TextureSettings::new()).unwrap();
-    let mut g2d = Gfx2d::new(&mut device);
+    let mut g2d = Gfx2d::new(&mut device, &mut factory);
     let window = Rc::new(RefCell::new(window));
     for e in piston::events(window) {
         use piston::event::*;
