@@ -42,9 +42,9 @@ pub struct Gfx2d<R: gfx::Resources> {
 
 impl<R: gfx::Resources> Gfx2d<R> {
     /// Creates a new G2D object.
-    pub fn new<D>(device: &mut D) -> Self
-        where D: gfx::Device
-               + gfx::Factory<R>
+    pub fn new<D, F>(device: &mut D, factory: &mut F) -> Self
+        where D: gfx::Device,
+              F: gfx::Factory<R>
     {
         use gfx_lib::traits::*;
         use gfx_lib::VertexFormat;
@@ -62,7 +62,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             .. gfx::ShaderSource::empty()
         };
 
-        let program = device.link_program(
+        let program = factory.link_program(
             vertex.choose(shader_model).unwrap(),
             fragment.choose(shader_model).unwrap()
         ).unwrap();
@@ -78,16 +78,16 @@ impl<R: gfx::Resources> Gfx2d<R> {
             .. gfx::ShaderSource::empty()
         };
 
-        let program_uv = device.link_program(
+        let program_uv = factory.link_program(
             vertex.choose(shader_model).unwrap(),
             fragment.choose(shader_model).unwrap()
         ).unwrap();
 
-        let buffer_pos = device.create_buffer(
+        let buffer_pos = factory.create_buffer(
             POS_COMPONENTS * BUFFER_SIZE,
             gfx::BufferUsage::Dynamic
         );
-        let buffer_uv = device.create_buffer(
+        let buffer_uv = factory.create_buffer(
             UV_COMPONENTS * BUFFER_SIZE,
             gfx::BufferUsage::Dynamic
         );
@@ -117,7 +117,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             params
         ).unwrap();
 
-        let sampler = device.create_sampler(
+        let sampler = factory.create_sampler(
             gfx::tex::SamplerInfo::new(
                 gfx::tex::FilterMethod::Trilinear,
                 gfx::tex::WrapMode::Clamp
@@ -134,9 +134,9 @@ impl<R: gfx::Resources> Gfx2d<R> {
             format: gfx::tex::RGBA8,
         };
         let image_info = texture_info.to_image_info();
-        let texture = device.create_texture(texture_info).unwrap();
+        let texture = factory.create_texture(texture_info).unwrap();
 
-        device.update_texture(
+        factory.update_texture(
             &texture,
             &image_info,
             &[0x20u8, 0xA0, 0xC0, 0x00],
