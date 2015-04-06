@@ -23,10 +23,6 @@ git = "https://github.com/pistondevelopers/graphics"
 git = "https://github.com/pistondevelopers/gfx_texture"
 #version = "0.0.0"
 
-[dependencies.image]
-git = "https://github.com/pistondevelopers/image"
-#version = "~0.2.0"
-
 [dependencies.gfx]
 git = "https://github.com/gfx-rs/gfx-rs"
 #version = "0.2.0"
