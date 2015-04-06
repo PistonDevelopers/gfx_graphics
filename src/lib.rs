@@ -7,7 +7,6 @@
 extern crate gfx as gfx_lib;
 extern crate gfx_texture;
 extern crate graphics;
-extern crate image;
 extern crate freetype;
 
 /// Reexports from gfx's crate.
