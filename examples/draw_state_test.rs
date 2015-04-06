@@ -81,6 +81,7 @@ fn main() {
 
         if let Some(_) = e.after_render_args() {
             device.after_frame();
+            factory.cleanup();
         }
     }
 }
