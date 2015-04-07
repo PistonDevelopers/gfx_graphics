@@ -21,7 +21,7 @@ fn main() {
         OpenGL::_3_2,
         WindowSettings::new(
             "gfx_graphics: draw_state_test".to_string(),
-            Size { width: 300, height: 300 }
+            Size { width: 600, height: 600 }
         )
         .exit_on_esc(true)
     );
@@ -41,12 +41,10 @@ fn main() {
         use piston::event::*;
         use piston::input::*;
 
-        if let Some(_) = e.render_args() {
+        if let Some(args) = e.render_args() {
             use graphics::*;
 
             g2d.draw(&mut renderer, &frame, |c, g| {
-                let transform = c.transform.trans(100.0, 100.0);
-
                 clear([0.8, 0.8, 0.8, 1.0], g);
                 Rectangle::new([1.0, 0.0, 0.0, 1.0])
                     .draw([0.0, 0.0, 100.0, 100.0],
@@ -61,8 +59,21 @@ fn main() {
                           c.transform,
                           g);
 
-                let clipped = c.draw_state.scissor(100, 100, 100, 100);
+                let transform = c.transform.trans(100.0, 100.0);
+                // Compute clip rectangle from upper left corner.
+                let (clip_x, clip_y, clip_w, clip_h) = (100, 100, 100, 100);
+                let (clip_x, clip_y, clip_w, clip_h) =
+                    (clip_x, args.height as u16 - clip_y - clip_h, clip_w, clip_h);
+                let clipped = c.draw_state.scissor(clip_x, clip_y, clip_w, clip_h);
                 Image::new().draw(&rust_logo, &clipped, transform, g);
+
+                let transform = c.transform.trans(200.0, 200.0);
+                Ellipse::new([1.0, 0.0, 0.0, 1.0])
+                    .draw([0.0, 0.0, 50.0, 50.0],
+                          clip_draw_state(),
+                          transform,
+                          g);
+                Image::new().draw(&rust_logo, inside_draw_state(), transform, g);
             });
 
             device.submit(renderer.as_buffer());
