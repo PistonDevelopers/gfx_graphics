@@ -21,17 +21,17 @@ pub enum Error {
 }
 
 /// A struct used for caching rendered font.
-pub struct GlyphCache<R: gfx::Resources> {
+pub struct GlyphCache<'a, R: gfx::Resources> {
     /// The font face.
-    pub face: freetype::Face,
+    pub face: freetype::Face<'a>,
     empty_texture: ::Texture<R>,
     data: HashMap<(FontSize, char), Character<R>>,
 }
 
-impl<R> GlyphCache<R> where R: gfx::Resources {
+impl<'a, R> GlyphCache<'a, R> where R: gfx::Resources {
      /// Constructor for a GlyphCache.
      pub fn new<D: gfx::Factory<R>>(font: &Path, device: &mut D)
-                -> Result<Self, Error> {
+                -> Result<GlyphCache<'static, R>, Error> {
         let freetype = match freetype::Library::init() {
             Ok(freetype) => freetype,
             Err(why) => return Err(Error::Freetype(why)),
@@ -101,7 +101,7 @@ impl<R> GlyphCache<R> where R: gfx::Resources {
     }
 }
 
-impl<R: gfx::Resources> graphics::character::CharacterCache for GlyphCache<R> {
+impl<'a, R: gfx::Resources> graphics::character::CharacterCache for GlyphCache<'a, R> {
     type Texture = ::Texture<R>;
 
     fn character(&mut self, size: FontSize, ch: char) -> &Character<R> {
