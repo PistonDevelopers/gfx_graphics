@@ -3,7 +3,7 @@
 name = "piston2d-gfx_graphics"
 version = "0.1.11"
 authors = ["bvssvni <bvssvni@gmail.com>"]
-keywords = ["graphics", "2d", "gfx"]
+keywords = ["graphics", "2d", "gfx", "piston"]
 description = "A Gfx 2D back-end for the Piston game engine"
 license = "MIT"
 readme = "README.md"
@@ -13,7 +13,6 @@ homepage = "https://github.com/PistonDevelopers/gfx_graphics"
 [lib]
 
 name = "gfx_graphics"
-path = "src/lib.rs"
 
 [dependencies.piston2d-graphics]
 git = "https://github.com/pistondevelopers/graphics"
@@ -46,3 +45,14 @@ git = "https://github.com/pistondevelopers/sdl2_window"
 [dev-dependencies.gfx_device_gl]
 git = "https://github.com/gfx-rs/gfx_device_gl"
 #version = "0.2.0"
+
+[features]
+
+default = ["image_png"]
+image_gif = ["piston-gfx_texture/image/gif"]
+image_jpeg = ["piston-gfx_texture/image/jpeg"]
+image_png = ["piston-gfx_texture/image/png"]
+image_ppm = ["piston-gfx_texture/image/ppm"]
+image_tga = ["piston-gfx_texture/image/tga"]
+image_tiff = ["piston-gfx_texture/image/tiff"]
+image_webp = ["piston-gfx_texture/image/webp"]
