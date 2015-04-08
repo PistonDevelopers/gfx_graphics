@@ -262,6 +262,23 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         );
     }
 
+    fn clear_stencil(&mut self, value: u8) {
+        let &mut GfxGraphics {
+            ref mut renderer,
+            frame,
+            ..
+        } = self;
+        renderer.clear(
+            gfx::ClearData {
+                color: [0.0; 4],
+                depth: 0.0,
+                stencil: value,
+            },
+            gfx::STENCIL,
+            frame
+        );
+    }
+
     fn tri_list<F>(
         &mut self,
         draw_state: &DrawState,
