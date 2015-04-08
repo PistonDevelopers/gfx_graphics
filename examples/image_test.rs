@@ -5,9 +5,8 @@ extern crate gfx_device_gl;
 extern crate gfx_graphics;
 
 use std::path::Path;
-use std::rc::Rc;
-use std::cell::RefCell;
 use piston::window::{ Window, WindowSettings, Size, OpenGLWindow };
+use piston::event::*;
 use gfx_graphics::gfx::traits::*;
 use gfx_graphics::{ Gfx2d, Texture, gfx, TextureSettings };
 use sdl2_window::{ Sdl2Window, OpenGL };
@@ -31,10 +30,7 @@ fn main() {
                                        &Path::new("./assets/rust.png"),
                                        &TextureSettings::new()).unwrap();
     let mut g2d = Gfx2d::new(&mut device, &mut factory);
-    let window = Rc::new(RefCell::new(window));
-    for e in piston::events(window) {
-        use piston::event::*;
-
+    for e in window.events() {
         if let Some(_) = e.render_args() {
             use graphics::*;
 

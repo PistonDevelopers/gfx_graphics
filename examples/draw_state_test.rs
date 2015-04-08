@@ -5,16 +5,14 @@ extern crate gfx_device_gl;
 extern crate gfx_graphics;
 
 use std::path::Path;
-use std::rc::Rc;
-use std::cell::RefCell;
 use piston::window::{ Window, WindowSettings, Size, OpenGLWindow };
+use piston::event::*;
 use gfx_graphics::gfx::traits::*;
 use gfx_graphics::{ Gfx2d, Texture, gfx, TextureSettings };
 use sdl2_window::{ Sdl2Window, OpenGL };
+use graphics::draw_state::BlendPreset;
 
 fn main() {
-    use graphics::draw_state::BlendPreset;
-
     println!("Press A to change blending");
 
     let mut window = Sdl2Window::new(
@@ -36,9 +34,7 @@ fn main() {
                                        &TextureSettings::new()).unwrap();
     let mut g2d = Gfx2d::new(&mut device, &mut factory);
     let mut blend = BlendPreset::Alpha;
-    let window = Rc::new(RefCell::new(window));
-    for e in piston::events(window) {
-        use piston::event::*;
+    for e in window.events() {
         use piston::input::*;
 
         if let Some(args) = e.render_args() {
