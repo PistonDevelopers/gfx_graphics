@@ -49,39 +49,43 @@ impl<R: gfx::Resources> Gfx2d<R> {
         use gfx_lib::traits::*;
         use gfx_lib::VertexFormat;
 
-        let shader_model = device.get_capabilities().shader_model;
+        let ref capabilities = device.get_capabilities();
 
-        let vertex = gfx::ShaderSource {
-            glsl_120: Some(shaders::VERTEX_SHADER[0]),
-            glsl_150: Some(shaders::VERTEX_SHADER[1]),
-            .. gfx::ShaderSource::empty()
-        };
-        let fragment = gfx::ShaderSource {
-            glsl_120: Some(shaders::FRAGMENT_SHADER[0]),
-            glsl_150: Some(shaders::FRAGMENT_SHADER[1]),
-            .. gfx::ShaderSource::empty()
-        };
-
-        let program = factory.link_program(
-            vertex.choose(shader_model).unwrap(),
-            fragment.choose(shader_model).unwrap()
-        ).unwrap();
-
-        let vertex = gfx::ShaderSource {
-            glsl_120: Some(shaders::VERTEX_SHADER_UV[0]),
-            glsl_150: Some(shaders::VERTEX_SHADER_UV[1]),
-            .. gfx::ShaderSource::empty()
-        };
-        let fragment = gfx::ShaderSource {
-            glsl_120: Some(shaders::FRAGMENT_SHADER_UV[0]),
-            glsl_150: Some(shaders::FRAGMENT_SHADER_UV[1]),
-            .. gfx::ShaderSource::empty()
+        let program = {
+            let vertex = gfx::ShaderSource {
+                glsl_120: Some(shaders::VERTEX_SHADER[0]),
+                glsl_150: Some(shaders::VERTEX_SHADER[1]),
+                .. gfx::ShaderSource::empty()
+            };
+            let fragment = gfx::ShaderSource {
+                glsl_120: Some(shaders::FRAGMENT_SHADER[0]),
+                glsl_150: Some(shaders::FRAGMENT_SHADER[1]),
+                .. gfx::ShaderSource::empty()
+            };
+            factory.link_program_source(
+                vertex,
+                fragment,
+                capabilities
+            ).unwrap()
         };
 
-        let program_uv = factory.link_program(
-            vertex.choose(shader_model).unwrap(),
-            fragment.choose(shader_model).unwrap()
-        ).unwrap();
+        let program_uv = {
+            let vertex = gfx::ShaderSource {
+                glsl_120: Some(shaders::VERTEX_SHADER_UV[0]),
+                glsl_150: Some(shaders::VERTEX_SHADER_UV[1]),
+                .. gfx::ShaderSource::empty()
+            };
+            let fragment = gfx::ShaderSource {
+                glsl_120: Some(shaders::FRAGMENT_SHADER_UV[0]),
+                glsl_150: Some(shaders::FRAGMENT_SHADER_UV[1]),
+                .. gfx::ShaderSource::empty()
+            };
+            factory.link_program_source(
+                vertex,
+                fragment,
+                capabilities
+            ).unwrap()
+        };
 
         let buffer_pos = factory.create_buffer(
             POS_COMPONENTS * BUFFER_SIZE,
