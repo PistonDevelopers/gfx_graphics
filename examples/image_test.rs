@@ -31,10 +31,10 @@ fn main() {
                                        &TextureSettings::new()).unwrap();
     let mut g2d = Gfx2d::new(&mut device, &mut factory);
     for e in window.events() {
-        if let Some(_) = e.render_args() {
+        if let Some(args) = e.render_args() {
             use graphics::*;
 
-            g2d.draw(&mut renderer, &frame, |c, g| {
+            g2d.draw(&mut renderer, &frame, args.viewport(), |c, g| {
                 let transform = c.transform.trans(100.0, 100.0);
 
                 clear([1.0; 4], g);

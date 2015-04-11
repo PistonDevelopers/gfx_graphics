@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use graphics::{ Context, DrawState, Graphics };
+use graphics::{ Context, DrawState, Graphics, Viewport };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use { Texture, shaders };
 use gfx_lib as gfx;
@@ -176,6 +176,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
         &mut self,
         renderer: &mut gfx::Renderer<R, C>,
         frame: &gfx::Frame<R>,
+        _viewport: Viewport,
         mut f: F
     )
         where C: gfx::CommandBuffer<R>,
