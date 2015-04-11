@@ -176,7 +176,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
         &mut self,
         renderer: &mut gfx::Renderer<R, C>,
         frame: &gfx::Frame<R>,
-        _viewport: Viewport,
+        viewport: Viewport,
         mut f: F
     )
         where C: gfx::CommandBuffer<R>,
@@ -187,10 +187,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             frame,
             self
         );
-        let c = Context::abs(
-            frame.width as f64,
-            frame.height as f64
-        );
+        let c = Context::new_viewport(viewport);
         f(c, g);
     }
 }
