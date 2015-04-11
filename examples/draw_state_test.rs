@@ -40,7 +40,7 @@ fn main() {
         if let Some(args) = e.render_args() {
             use graphics::*;
 
-            g2d.draw(&mut renderer, &frame, |c, g| {
+            g2d.draw(&mut renderer, &frame, args.viewport(), |c, g| {
                 clear([0.8, 0.8, 0.8, 1.0], g);
                 Rectangle::new([1.0, 0.0, 0.0, 1.0])
                     .draw([0.0, 0.0, 100.0, 100.0],
