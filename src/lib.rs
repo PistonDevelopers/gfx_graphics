@@ -8,6 +8,7 @@ extern crate gfx as gfx_lib;
 extern crate gfx_texture;
 extern crate graphics;
 extern crate freetype;
+extern crate viewport;
 
 /// Reexports from gfx's crate.
 pub mod gfx {
@@ -16,6 +17,7 @@ pub mod gfx {
 }
 pub use gfx_texture::Texture;
 pub use gfx_texture::Settings as TextureSettings;
+pub use viewport::Viewport;
 
 pub use back_end::{ Gfx2d, GfxGraphics };
 pub use Gfx2d as G2D;
