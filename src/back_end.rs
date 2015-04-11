@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
-use graphics::{ Context, DrawState, Graphics };
+use graphics::{ Context, DrawState, Graphics, Viewport };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
-use { Texture, Viewport, shaders };
+use { Texture, shaders };
 use gfx_lib as gfx;
 
 const POS_COMPONENTS: usize = 2;
