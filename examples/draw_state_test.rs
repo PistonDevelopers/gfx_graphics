@@ -26,7 +26,7 @@ fn main() {
 
     let (mut device, mut factory) = gfx_device_gl::create(|s| window.get_proc_address(s));
     let size = window.size();
-    let frame = gfx::Frame::new(size.width as u16, size.height as u16);
+    let frame = gfx::Frame::empty(size.width as u16, size.height as u16);
     let mut renderer = factory.create_renderer();
 
     let rust_logo = Texture::from_path(&mut factory,
