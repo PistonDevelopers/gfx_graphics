@@ -13,6 +13,7 @@ homepage = "https://github.com/PistonDevelopers/gfx_graphics"
 [lib]
 
 name = "gfx_graphics"
+doctest = false
 
 [dependencies.piston2d-graphics]
 git = "https://github.com/pistondevelopers/graphics"
