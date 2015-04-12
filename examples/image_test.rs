@@ -8,7 +8,7 @@ use std::path::Path;
 use piston::window::{ Window, WindowSettings, Size, OpenGLWindow };
 use piston::event::*;
 use gfx_graphics::gfx::traits::*;
-use gfx_graphics::{ Gfx2d, Texture, gfx, TextureSettings };
+use gfx_graphics::{ Gfx2d, Texture, TextureSettings };
 use sdl2_window::{ Sdl2Window, OpenGL };
 
 fn main() {
@@ -23,7 +23,7 @@ fn main() {
 
     let (mut device, mut factory) = gfx_device_gl::create(|s| window.get_proc_address(s));
     let size = window.size();
-    let frame = gfx::Frame::empty(size.width as u16, size.height as u16);
+    let output = factory.make_fake_output(size.width as u16, size.height as u16);
     let mut renderer = factory.create_renderer();
 
     let rust_logo = Texture::from_path(&mut factory,
@@ -34,7 +34,7 @@ fn main() {
         if let Some(args) = e.render_args() {
             use graphics::*;
 
-            g2d.draw(&mut renderer, &frame, args.viewport(), |c, g| {
+            g2d.draw(&mut renderer, &output, args.viewport(), |c, g| {
                 let transform = c.transform.trans(100.0, 100.0);
 
                 clear([1.0; 4], g);

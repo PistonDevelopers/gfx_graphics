@@ -172,19 +172,20 @@ impl<R: gfx::Resources> Gfx2d<R> {
     }
 
     /// Renders graphics to a Gfx renderer.
-    pub fn draw<C, F>(
+    pub fn draw<C, O, F>(
         &mut self,
         renderer: &mut gfx::Renderer<R, C>,
-        frame: &gfx::Frame<R>,
+        output: &O,
         viewport: Viewport,
         mut f: F
     )
         where C: gfx::CommandBuffer<R>,
-              F: FnMut(Context, &mut GfxGraphics<R, C>)
+              O: gfx::Output<R>,
+              F: FnMut(Context, &mut GfxGraphics<R, C, O>)
     {
         let ref mut g = GfxGraphics::new(
             renderer,
-            frame,
+            output,
             self
         );
         let c = Context::new_viewport(viewport);
@@ -193,9 +194,10 @@ impl<R: gfx::Resources> Gfx2d<R> {
 }
 
 /// Used for rendering 2D graphics.
-pub struct GfxGraphics<'a, R, C>
+pub struct GfxGraphics<'a, R, C, O>
     where R: gfx::Resources + 'a,
           C: gfx::CommandBuffer<R> + 'a,
+          O: gfx::Output<R> + 'a,
           R::Buffer: 'a,
           R::ArrayBuffer: 'a,
           R::Shader: 'a,
@@ -206,21 +208,22 @@ pub struct GfxGraphics<'a, R, C>
           R::Sampler: 'a
 {
     renderer: &'a mut gfx::Renderer<R, C>,
-    frame: &'a gfx::Frame<R>,
+    output: &'a O,
     g2d: &'a mut Gfx2d<R>,
 }
 
-impl<'a, R, C> GfxGraphics<'a, R, C>
+impl<'a, R, C, O> GfxGraphics<'a, R, C, O>
     where R: gfx::Resources,
-          C: gfx::CommandBuffer<R>
+          C: gfx::CommandBuffer<R>,
+          O: gfx::Output<R>
 {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(renderer: &'a mut gfx::Renderer<R, C>,
-               frame: &'a gfx::Frame<R>,
+               output: &'a O,
                g2d: &'a mut Gfx2d<R>) -> Self {
         GfxGraphics {
             renderer: renderer,
-            frame: frame,
+            output: output,
             g2d: g2d,
         }
     }
@@ -233,9 +236,10 @@ impl<'a, R, C> GfxGraphics<'a, R, C>
     }
 }
 
-impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
+impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
     where R: gfx::Resources,
           C: gfx::CommandBuffer<R>,
+          O: gfx::Output<R>,
           R::Buffer: 'a,
           R::ArrayBuffer: 'a,
           R::Shader: 'a,
@@ -250,7 +254,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     fn clear(&mut self, color: [f32; 4]) {
         let &mut GfxGraphics {
             ref mut renderer,
-            frame,
+            output,
             ..
         } = self;
         renderer.clear(
@@ -260,14 +264,14 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 stencil: 0,
             },
             gfx::COLOR,
-            frame
+            output
         );
     }
 
     fn clear_stencil(&mut self, value: u8) {
         let &mut GfxGraphics {
             ref mut renderer,
-            frame,
+            output,
             ..
         } = self;
         renderer.clear(
@@ -277,7 +281,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 stencil: value,
             },
             gfx::STENCIL,
-            frame
+            output
         );
     }
 
@@ -291,7 +295,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     {
         let &mut GfxGraphics {
             ref mut renderer,
-            ref frame,
+            ref output,
             g2d: &mut Gfx2d {
                 ref mut buffer_pos,
                 ref mut batch,
@@ -312,7 +316,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                     end: n as u32,
                     kind: gfx::SliceKind::Vertex
             };
-            let _ = renderer.draw(batch, *frame);
+            let _ = renderer.draw(batch, *output);
         })
     }
 
@@ -327,7 +331,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     {
         let &mut GfxGraphics {
             ref mut renderer,
-            ref frame,
+            ref output,
             g2d: &mut Gfx2d {
                 ref mut buffer_pos,
                 ref mut buffer_uv,
@@ -355,7 +359,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                     end: n as u32,
                     kind: gfx::SliceKind::Vertex
             };
-            let _ = renderer.draw(batch_uv, *frame);
+            let _ = renderer.draw(batch_uv, *output);
         })
     }
 }
