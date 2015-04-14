@@ -47,6 +47,9 @@ git = "https://github.com/pistondevelopers/sdl2_window"
 git = "https://github.com/gfx-rs/gfx_device_gl"
 #version = "0.2.0"
 
+[dev-dependencies.piston_window]
+git = "https://github.com/pistondevelopers/piston_window"
+
 [features]
 
 default = ["image_png"]
