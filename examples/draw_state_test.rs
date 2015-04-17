@@ -29,7 +29,7 @@ fn main() {
 
     let events = PistonWindow::new(window, empty_app());
 
-    let rust_logo = Texture::from_path(&mut events.gfx.borrow_mut().factory,
+    let rust_logo = Texture::from_path(&mut events.canvas.borrow_mut().factory,
                                        &Path::new("./assets/rust.png"),
                                        &TextureSettings::new()).unwrap();
 
