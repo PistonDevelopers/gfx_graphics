@@ -2,8 +2,7 @@
 
 use std::path::Path;
 use std::collections::hash_map::{ HashMap, Entry };
-use { freetype, graphics };
-use gfx_lib as gfx;
+use { gfx, freetype, graphics };
 
 /// The type alias for the font size.
 pub type FontSize = u32;
