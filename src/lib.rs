@@ -7,7 +7,6 @@
 extern crate gfx;
 extern crate gfx_texture;
 extern crate graphics;
-extern crate freetype;
 
 pub use gfx_texture::Texture;
 pub use gfx_texture::Settings as TextureSettings;
