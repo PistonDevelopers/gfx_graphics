@@ -8,7 +8,7 @@ extern crate gfx_graphics;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::path::Path;
-use piston::window::{ Window, WindowSettings, Size };
+use piston::window::WindowSettings;
 use piston::event::*;
 use gfx_graphics::{ Texture, TextureSettings };
 use sdl2_window::{ Sdl2Window, OpenGL };
@@ -18,22 +18,22 @@ use piston_window::*;
 fn main() {
     println!("Press A to change blending");
 
-    let window = Rc::new(RefCell::new(Sdl2Window::new(
-        OpenGL::_3_2,
-        WindowSettings::new(
-            "gfx_graphics: draw_state_test".to_string(),
-            Size { width: 600, height: 600 }
+    let window = Rc::new(RefCell::new(
+        Sdl2Window::new(
+            OpenGL::_3_2,
+            WindowSettings::new(
+                "gfx_graphics: draw_state_test",
+                [600, 600]
+            )
+            .exit_on_esc(true)
         )
-        .exit_on_esc(true)
-    )));
+    ));
 
     let events = PistonWindow::new(window, empty_app());
-
+    let mut blend = BlendPreset::Alpha;
     let rust_logo = Texture::from_path(&mut events.canvas.borrow_mut().factory,
                                        &Path::new("./assets/rust.png"),
                                        &TextureSettings::new()).unwrap();
-
-    let mut blend = BlendPreset::Alpha;
     for e in events {
         use piston::input::*;
         use graphics::*;

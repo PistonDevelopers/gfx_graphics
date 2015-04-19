@@ -8,20 +8,22 @@ extern crate gfx_graphics;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::path::Path;
-use piston::window::{ WindowSettings, Size };
+use piston::window::WindowSettings;
 use piston_window::*;
 use gfx_graphics::{ Texture, TextureSettings };
 use sdl2_window::{ Sdl2Window, OpenGL };
 
 fn main() {
-    let window = Rc::new(RefCell::new(Sdl2Window::new(
-        OpenGL::_3_2,
-        WindowSettings::new(
-            "gfx_graphics: image_test".to_string(),
-            Size { width: 300, height: 300 }
+    let window = Rc::new(RefCell::new(
+        Sdl2Window::new(
+            OpenGL::_3_2,
+            WindowSettings::new(
+                "gfx_graphics: image_test",
+                [300, 300]
+            )
+            .exit_on_esc(true)
         )
-        .exit_on_esc(true)
-    )));
+    ));
 
     let events = PistonWindow::new(window, empty_app());
     let rust_logo = Texture::from_path(&mut events.canvas.borrow_mut().factory,
