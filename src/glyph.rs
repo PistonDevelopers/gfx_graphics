@@ -40,39 +40,18 @@ impl<'a, R> GlyphCache<'a, R> where R: gfx::Resources {
             Ok(face) => face,
             Err(why) => return Err(Error::Freetype(why)),
         };
-        let texture = {
-            let tinfo = gfx::tex::TextureInfo {
-                width: 1,
-                height: 1,
-                depth: 1,
-                levels: 1,
-                format: gfx::tex::RGBA8,
-                kind: gfx::tex::TextureKind::Texture2D,
-            };
-            let image_info = tinfo.to_image_info();
-            match device.create_texture(tinfo) {
-                Ok(t) => match device.update_texture(&t, &image_info, &[0u8; 4],
-                                                     Some(gfx::tex::TextureKind::Texture2D)) {
-                    Ok(()) => t,
-                    Err(e) => return Err(Error::Texture(e)),
-                },
-                Err(e) => return Err(Error::Texture(e)),
-            }
-        };
         Ok(GlyphCache {
             face: face,
-            empty_texture: ::Texture {
-                handle: texture
-            },
+            empty_texture: try!(::Texture::empty(device).map_err(Error::Texture)),
             data: HashMap::new(),
         })
     }
 
     /// Generate all pending characters.
     pub fn update<D: gfx::Factory<R>>(&mut self, device: &mut D) {
-        let empty_handle = self.empty_texture.handle.clone();
+        let ref empty_handle = self.empty_texture;
         for (&(size, ch), value) in self.data.iter_mut()
-                .filter(|&(_, ref c)| c.texture.handle == empty_handle) {
+                .filter(|&(_, &mut Character { ref texture, .. })| texture == empty_handle) {
             self.face.set_pixel_sizes(0, size).unwrap();
             self.face.load_char(ch as usize, freetype::face::DEFAULT).unwrap();
             let glyph = self.face.glyph().get_glyph().unwrap();
@@ -112,9 +91,7 @@ impl<'a, R: gfx::Resources> graphics::character::CharacterCache for GlyphCache<'
                 v.insert(graphics::character::Character {
                     offset: [0.0; 2],
                     size: [1.0; 2],
-                    texture: ::Texture {
-                        handle: self.empty_texture.handle.clone()
-                    },
+                    texture: self.empty_texture.clone()
                 })
             },
         }

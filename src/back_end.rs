@@ -232,7 +232,7 @@ impl<'a, R, C, O> GfxGraphics<'a, R, C, O>
     pub fn has_texture_alpha(&self, texture: &Texture<R>) -> bool {
         use gfx_lib::tex::Components::RGBA;
 
-        texture.handle.get_info().format.get_components() == Some(RGBA)
+        texture.handle().get_info().format.get_components() == Some(RGBA)
     }
 }
 
@@ -341,7 +341,7 @@ impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
         } = self;
 
         batch_uv.state = *draw_state;
-        batch_uv.param.s_texture.0 = texture.handle.clone();
+        batch_uv.param.s_texture.0 = texture.handle();
         batch_uv.param.color = *color;
 
         f(&mut |vertices: &[f32], texture_coords: &[f32]| {
