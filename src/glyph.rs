@@ -31,15 +31,15 @@ impl From<ft::error::Error> for Error {
 }
 
 /// A struct used for caching rendered font.
-pub struct GlyphCache<'a, R> where R: gfx::Resources {
+pub struct GlyphCache<R> where R: gfx::Resources {
     /// The font face.
-    pub face: ft::Face<'a>,
+    pub face: ft::Face<'static>,
     empty_texture: Texture<R>,
     need_update: bool,
     data: HashMap<(FontSize, char), Character<Texture<R>>>
 }
 
-impl<'a, R> GlyphCache<'a, R> where R: gfx::Resources {
+impl<R> GlyphCache<R> where R: gfx::Resources {
      /// Constructor for a GlyphCache.
     pub fn new<F>(font: &Path, factory: &mut F) -> Result<Self, Error>
         where F: gfx::Factory<R>
@@ -89,7 +89,7 @@ impl<'a, R> GlyphCache<'a, R> where R: gfx::Resources {
     }
 }
 
-impl<'a, R> CharacterCache for GlyphCache<'a, R> where R: gfx::Resources {
+impl<R> CharacterCache for GlyphCache<R> where R: gfx::Resources {
     type Texture = Texture<R>;
 
     fn character(&mut self, size: FontSize, ch: char) -> &Character<Self::Texture> {
