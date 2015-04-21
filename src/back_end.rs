@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use graphics::{ Context, DrawState, Graphics, Viewport };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
-use { gfx, Texture, shaders };
+use { gfx, Texture };
 
 const POS_COMPONENTS: usize = 2;
 const UV_COMPONENTS: usize = 2;
@@ -47,18 +47,19 @@ impl<R: gfx::Resources> Gfx2d<R> {
     {
         use gfx::traits::*;
         use gfx::VertexFormat;
+        use shaders::{ colored, textured };
 
         let ref capabilities = device.get_capabilities();
 
         let program = {
             let vertex = gfx::ShaderSource {
-                glsl_120: Some(shaders::VERTEX_SHADER[0]),
-                glsl_150: Some(shaders::VERTEX_SHADER[1]),
+                glsl_120: Some(colored::VERTEX_GLSL_120),
+                glsl_150: Some(colored::VERTEX_GLSL_150_CORE),
                 .. gfx::ShaderSource::empty()
             };
             let fragment = gfx::ShaderSource {
-                glsl_120: Some(shaders::FRAGMENT_SHADER[0]),
-                glsl_150: Some(shaders::FRAGMENT_SHADER[1]),
+                glsl_120: Some(colored::FRAGMENT_GLSL_120),
+                glsl_150: Some(colored::FRAGMENT_GLSL_150_CORE),
                 .. gfx::ShaderSource::empty()
             };
             factory.link_program_source(
@@ -70,13 +71,13 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let program_uv = {
             let vertex = gfx::ShaderSource {
-                glsl_120: Some(shaders::VERTEX_SHADER_UV[0]),
-                glsl_150: Some(shaders::VERTEX_SHADER_UV[1]),
+                glsl_120: Some(textured::VERTEX_GLSL_120),
+                glsl_150: Some(textured::VERTEX_GLSL_150_CORE),
                 .. gfx::ShaderSource::empty()
             };
             let fragment = gfx::ShaderSource {
-                glsl_120: Some(shaders::FRAGMENT_SHADER_UV[0]),
-                glsl_150: Some(shaders::FRAGMENT_SHADER_UV[1]),
+                glsl_120: Some(textured::FRAGMENT_GLSL_120),
+                glsl_150: Some(textured::FRAGMENT_GLSL_150_CORE),
                 .. gfx::ShaderSource::empty()
             };
             factory.link_program_source(
