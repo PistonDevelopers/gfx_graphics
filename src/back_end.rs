@@ -250,7 +250,7 @@ impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
 {
     type Texture = Texture<R>;
 
-    fn clear(&mut self, color: [f32; 4]) {
+    fn clear_color(&mut self, color: [f32; 4]) {
         let &mut GfxGraphics {
             ref mut renderer,
             output,
