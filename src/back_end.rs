@@ -128,28 +128,11 @@ impl<R: gfx::Resources> Gfx2d<R> {
             )
         );
 
-        // Create a dummy texture
-        let texture_info = gfx::tex::TextureInfo {
-            width: 1,
-            height: 1,
-            depth: 1,
-            levels: 1,
-            kind: gfx::tex::TextureKind::Texture2D,
-            format: gfx::tex::RGBA8,
-        };
-        let image_info = texture_info.to_image_info();
-        let texture = factory.create_texture(texture_info).unwrap();
-
-        factory.update_texture(
-            &texture,
-            &image_info,
-            &[0x20u8, 0xA0, 0xC0, 0x00],
-            Some(gfx::tex::TextureKind::Texture2D)
-        ).unwrap();
+        let tex_handle = Texture::empty(factory).unwrap().handle();
 
         let params_uv = ParamsUV {
             color: [1.0; 4],
-            s_texture: (texture, Some(sampler))
+            s_texture: (tex_handle, Some(sampler))
         };
         let mut batch_uv = gfx::batch::OwnedBatch::new(
             mesh_uv,
