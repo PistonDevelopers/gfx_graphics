@@ -13,8 +13,6 @@ pub use gfx_texture::Texture;
 pub use gfx_texture::Settings as TextureSettings;
 
 pub use back_end::{ Gfx2d, GfxGraphics };
-pub use Gfx2d as G2D;
-pub use GfxGraphics as GraphicsBackEnd;
 pub use glyph::GlyphCache;
 
 mod back_end;
