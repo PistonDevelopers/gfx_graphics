@@ -2,7 +2,7 @@
 #![feature(plugin, custom_attribute)]
 #![plugin(gfx_macros)]
 
-//! The implementation of a Rust-Graphics back-end using gfx-rs.
+//! A Piston 2D graphics back-end using gfx-rs.
 
 extern crate gfx;
 extern crate gfx_texture;
