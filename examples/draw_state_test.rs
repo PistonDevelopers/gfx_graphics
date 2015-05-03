@@ -17,6 +17,7 @@ use piston_window::*;
 
 fn main() {
     println!("Press A to change blending");
+    println!("Press S to change clip inside/out");
 
     let window = Rc::new(RefCell::new(
         Sdl2Window::new(
@@ -26,11 +27,13 @@ fn main() {
                 [600, 600]
             )
             .exit_on_esc(true)
+            .samples(4)
         )
     ));
 
     let events = PistonWindow::new(window, empty_app());
     let mut blend = BlendPreset::Alpha;
+    let mut clip_inside = true;
     let rust_logo = Texture::from_path(&mut events.canvas.borrow_mut().factory,
                                        &Path::new("./assets/rust.png"),
                                        &TextureSettings::new()).unwrap();
@@ -42,17 +45,11 @@ fn main() {
             clear([0.8, 0.8, 0.8, 1.0], g);
             g.clear_stencil(0);
             Rectangle::new([1.0, 0.0, 0.0, 1.0])
-                .draw([0.0, 0.0, 100.0, 100.0],
-                      &c.draw_state,
-                      c.transform,
-                      g);
+                .draw([0.0, 0.0, 100.0, 100.0], &c.draw_state, c.transform, g);
 
             let draw_state = c.draw_state.blend(blend);
             Rectangle::new([0.5, 1.0, 0.0, 0.3])
-                .draw([50.0, 50.0, 100.0, 100.0],
-                      &draw_state,
-                      c.transform,
-                      g);
+                .draw([50.0, 50.0, 100.0, 100.0], &draw_state, c.transform, g);
 
             let transform = c.transform.trans(100.0, 100.0);
             // Compute clip rectangle from upper left corner.
@@ -64,11 +61,11 @@ fn main() {
 
             let transform = c.transform.trans(200.0, 200.0);
             Ellipse::new([1.0, 0.0, 0.0, 1.0])
-                .draw([0.0, 0.0, 50.0, 50.0],
-                      clip_draw_state(),
-                      transform,
-                      g);
-            Image::new().draw(&rust_logo, inside_draw_state(), transform, g);
+                .draw([0.0, 0.0, 50.0, 50.0], clip_draw_state(), transform, g);
+            Image::new().draw(&rust_logo,
+                if clip_inside { inside_draw_state() }
+                else { outside_draw_state() },
+                transform, g);
         });
 
         if let Some(Button::Keyboard(Key::A)) = e.press_args() {
@@ -79,6 +76,15 @@ fn main() {
                 BlendPreset::Invert => BlendPreset::Alpha,
             };
             println!("Changed blending to {:?}", blend);
+        }
+
+        if let Some(Button::Keyboard(Key::S)) = e.press_args() {
+            clip_inside = !clip_inside;
+            if clip_inside {
+                println!("Changed to clip inside");
+            } else {
+                println!("Changed to clip outside");
+            }
         }
     }
 }
