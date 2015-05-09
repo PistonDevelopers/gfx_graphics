@@ -33,8 +33,8 @@ struct ParamsUV<R: gfx::Resources> {
 
 /// The data used for drawing 2D graphics.
 pub struct Gfx2d<R: gfx::Resources> {
-    buffer_pos: gfx::BufferHandle<R, f32>,
-    buffer_uv: gfx::BufferHandle<R, f32>,
+    buffer_pos: gfx::handle::Buffer<R, f32>,
+    buffer_uv: gfx::handle::Buffer<R, f32>,
     batch: gfx::batch::OwnedBatch<Params<R>>,
     batch_uv: gfx::batch::OwnedBatch<ParamsUV<R>>,
 }
