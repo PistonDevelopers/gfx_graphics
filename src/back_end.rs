@@ -99,17 +99,13 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let mut mesh = gfx::Mesh::new(BUFFER_SIZE as u32);
         mesh.attributes.extend(
-            PositionFormat::generate(
-                buffer_pos.raw().clone()
-            )
+            PositionFormat::generate(&buffer_pos)
         );
 
         // Reuse parameters from `mesh`.
         let mut mesh_uv = mesh.clone();
         mesh_uv.attributes.extend(
-            TexCoordsFormat::generate(
-                buffer_uv.raw().clone()
-            )
+            TexCoordsFormat::generate(&buffer_uv)
         );
 
         let params = Params {
@@ -133,7 +129,8 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let params_uv = ParamsUV {
             color: [1.0; 4],
-            texture: (tex_handle, Some(sampler))
+            texture: (tex_handle, Some(sampler)),
+            _r: PhantomData,
         };
         let mut batch_uv = gfx::batch::OwnedBatch::new(
             mesh_uv,
@@ -148,8 +145,8 @@ impl<R: gfx::Resources> Gfx2d<R> {
             gfx::state::RasterMethod::Fill(gfx::state::CullFace::Nothing);
 
         Gfx2d {
-            buffer_pos: buffer_pos,
-            buffer_uv: buffer_uv,
+            buffer_pos: buffer_pos.cast(),
+            buffer_uv: buffer_uv.cast(),
             batch: batch,
             batch_uv: batch_uv,
         }
@@ -325,7 +322,7 @@ impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
         } = self;
 
         batch_uv.state = *draw_state;
-        batch_uv.param.s_texture.0 = texture.handle();
+        batch_uv.param.texture.0 = texture.handle();
         batch_uv.param.color = *color;
 
         f(&mut |vertices: &[f32], texture_coords: &[f32]| {
