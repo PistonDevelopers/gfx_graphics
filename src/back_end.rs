@@ -10,26 +10,27 @@ const UV_COMPONENTS: usize = 2;
 // Needs to be improved on gfx-rs side.
 // For some reason, using ``*_COMPONENT` triggers some macros errors.
 
-#[vertex_format]
-struct PositionFormat { pos: [f32; 2] }
+gfx_vertex!( PositionFormat {
+    pos@ pos: [f32; 2],
+});
 
-#[vertex_format]
-struct ColorFormat { color: [f32; 4] }
+gfx_vertex!( ColorFormat {
+    color@ color: [f32; 4],
+});
 
-#[vertex_format]
-struct TexCoordsFormat { uv: [f32; 2] }
+gfx_vertex!( TexCoordsFormat {
+    uv@ uv: [f32; 2],
+});
 
-#[shader_param]
-struct Params<R: gfx::Resources> {
-    color: [f32; 4],
-    _dummy: PhantomData<R>,
-}
+gfx_parameters!( Params/ParamsLink {
+    color@ color: [f32; 4],
+});
 
-#[shader_param]
-struct ParamsUV<R: gfx::Resources> {
-    color: [f32; 4],
-    s_texture: gfx::shade::TextureParam<R>,
-}
+gfx_parameters!( ParamsUV/ParamsUVLink {
+    color@ color: [f32; 4],
+    s_texture@ texture: gfx::shade::TextureParam<R>,
+});
+
 
 /// The data used for drawing 2D graphics.
 pub struct Gfx2d<R: gfx::Resources> {
@@ -113,7 +114,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let params = Params {
             color: [1.0; 4],
-            _dummy: PhantomData,
+            _r: PhantomData,
         };
         let mut batch = gfx::batch::OwnedBatch::new(
             mesh,
@@ -132,7 +133,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let params_uv = ParamsUV {
             color: [1.0; 4],
-            s_texture: (tex_handle, Some(sampler))
+            texture: (tex_handle, Some(sampler))
         };
         let mut batch_uv = gfx::batch::OwnedBatch::new(
             mesh_uv,
