@@ -41,10 +41,9 @@ pub struct Gfx2d<R: gfx::Resources> {
 }
 
 impl<R: gfx::Resources> Gfx2d<R> {
-    /// Creates a new G2D object.
-    pub fn new<D, F>(device: &mut D, factory: &mut F) -> Self
-        where D: gfx::Device,
-              F: gfx::Factory<R>
+    /// Creates a new Gfx2d object.
+    pub fn new<F>(factory: &mut F) -> Self
+        where F: gfx::Factory<R>
     {
         use gfx::traits::*;
         use gfx::VertexFormat;
