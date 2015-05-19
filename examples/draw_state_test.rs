@@ -34,7 +34,8 @@ fn main() {
     let events = PistonWindow::new(window, empty_app());
     let mut blend = BlendPreset::Alpha;
     let mut clip_inside = true;
-    let rust_logo = Texture::from_path(&mut events.canvas.borrow_mut().factory,
+    let ref mut factory = events.device.borrow().spawn_factory();
+    let rust_logo = Texture::from_path(factory,
                                        &Path::new("./assets/rust.png"),
                                        &TextureSettings::new()).unwrap();
     for e in events {
