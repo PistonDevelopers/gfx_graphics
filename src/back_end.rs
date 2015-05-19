@@ -22,11 +22,11 @@ gfx_vertex!( TexCoordsFormat {
     uv@ uv: [f32; 2],
 });
 
-gfx_parameters!( Params/ParamsLink {
+gfx_parameters!( Params {
     color@ color: [f32; 4],
 });
 
-gfx_parameters!( ParamsUV/ParamsUVLink {
+gfx_parameters!( ParamsUV {
     color@ color: [f32; 4],
     s_texture@ texture: gfx::shade::TextureParam<R>,
 });
@@ -50,8 +50,6 @@ impl<R: gfx::Resources> Gfx2d<R> {
         use gfx::VertexFormat;
         use shaders::{ colored, textured };
 
-        let ref capabilities = device.get_capabilities();
-
         let program = {
             let vertex = gfx::ShaderSource {
                 glsl_120: Some(colored::VERTEX_GLSL_120),
@@ -65,8 +63,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             };
             factory.link_program_source(
                 vertex,
-                fragment,
-                capabilities
+                fragment
             ).unwrap()
         };
 
@@ -83,18 +80,17 @@ impl<R: gfx::Resources> Gfx2d<R> {
             };
             factory.link_program_source(
                 vertex,
-                fragment,
-                capabilities
+                fragment
             ).unwrap()
         };
 
-        let buffer_pos = factory.create_buffer(
+        let buffer_pos = factory.create_buffer_dynamic(
             POS_COMPONENTS * BUFFER_SIZE,
-            gfx::BufferUsage::Dynamic
+            gfx::BufferRole::Vertex
         );
-        let buffer_uv = factory.create_buffer(
+        let buffer_uv = factory.create_buffer_dynamic(
             UV_COMPONENTS * BUFFER_SIZE,
-            gfx::BufferUsage::Dynamic
+            gfx::BufferRole::Vertex
         );
 
         let mut mesh = gfx::Mesh::new(BUFFER_SIZE as u32);
@@ -288,7 +284,7 @@ impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
         batch.param.color = *color;
 
         f(&mut |vertices: &[f32]| {
-            renderer.update_buffer_vec(&buffer_pos, vertices, 0);
+            renderer.update_buffer(&buffer_pos.raw(), vertices, 0);
 
             let n = vertices.len() / POS_COMPONENTS;
             batch.slice = gfx::Slice {
@@ -297,7 +293,7 @@ impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
                     end: n as u32,
                     kind: gfx::SliceKind::Vertex
             };
-            let _ = renderer.draw(batch, *output);
+            let _ = renderer.draw(batch, None, *output);
         })
     }
 
@@ -330,8 +326,8 @@ impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
                 vertices.len() * UV_COMPONENTS,
                 texture_coords.len() * POS_COMPONENTS
             );
-            renderer.update_buffer_vec(&buffer_pos, vertices, 0);
-            renderer.update_buffer_vec(&buffer_uv, texture_coords, 0);
+            renderer.update_buffer(&buffer_pos.raw(), vertices, 0);
+            renderer.update_buffer(&buffer_uv.raw(), texture_coords, 0);
 
             let n = vertices.len() / POS_COMPONENTS;
             batch_uv.slice = gfx::Slice {
@@ -340,7 +336,7 @@ impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
                     end: n as u32,
                     kind: gfx::SliceKind::Vertex
             };
-            let _ = renderer.draw(batch_uv, *output);
+            let _ = renderer.draw(batch_uv, None, *output);
         })
     }
 }
