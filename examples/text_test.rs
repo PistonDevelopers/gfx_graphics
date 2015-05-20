@@ -27,16 +27,10 @@ fn main() {
 
     let events = PistonWindow::new(window, empty_app());
     let ref font = Path::new("assets/FiraSans-Regular.ttf");
-    let ref mut factory = events.device.borrow().spawn_factory();
+    let factory = events.device.borrow().spawn_factory();
     let mut glyph_cache = GlyphCache::new(font, factory).unwrap();
 
     for e in events {
-        use piston::event::*;
-
-        if let Some(_) = e.update_args() {
-            glyph_cache.update(factory);
-        }
-
         e.draw_2d(|c, g| {
             use graphics::*;
 
