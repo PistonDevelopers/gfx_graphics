@@ -1,7 +1,7 @@
 extern crate piston;
 extern crate graphics;
 extern crate piston_window;
-extern crate sdl2_window;
+extern crate glutin_window;
 extern crate gfx_device_gl;
 extern crate gfx_graphics;
 
@@ -11,7 +11,7 @@ use std::path::Path;
 use piston::window::WindowSettings;
 use piston::event::*;
 use gfx_graphics::{ Texture, TextureSettings };
-use sdl2_window::{ Sdl2Window, OpenGL };
+use glutin_window::{ GlutinWindow, OpenGL };
 use graphics::draw_state::BlendPreset;
 use piston_window::*;
 
@@ -20,7 +20,7 @@ fn main() {
     println!("Press S to change clip inside/out");
 
     let window = Rc::new(RefCell::new(
-        Sdl2Window::new(
+        GlutinWindow::new(
             OpenGL::_3_2,
             WindowSettings::new(
                 "gfx_graphics: draw_state_test",
