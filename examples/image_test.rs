@@ -1,7 +1,7 @@
 extern crate piston;
 extern crate graphics;
 extern crate piston_window;
-extern crate sdl2_window;
+extern crate glutin_window;
 extern crate gfx_device_gl;
 extern crate gfx_graphics;
 
@@ -11,11 +11,11 @@ use std::path::Path;
 use piston::window::WindowSettings;
 use piston_window::*;
 use gfx_graphics::{ Texture, TextureSettings };
-use sdl2_window::{ Sdl2Window, OpenGL };
+use glutin_window::{ GlutinWindow, OpenGL };
 
 fn main() {
     let window = Rc::new(RefCell::new(
-        Sdl2Window::new(
+        GlutinWindow::new(
             OpenGL::_3_2,
             WindowSettings::new(
                 "gfx_graphics: image_test",
