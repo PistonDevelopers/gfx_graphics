@@ -22,12 +22,6 @@ piston-shaders_graphics2d = "0.0.0"
 piston-gfx_texture = "0.0.7"
 piston2d-graphics = "0.0.48"
 
-[dev-dependencies]
-gfx_device_gl = "0.4.*"
-piston = "0.1.3"
-pistoncore-glutin_window = "0.0.9"
-piston_window = "0.0.7"
-
 
 [features]
 
