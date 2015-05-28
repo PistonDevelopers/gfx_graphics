@@ -1,7 +1,7 @@
 [package]
 
 name = "piston2d-gfx_graphics"
-version = "0.1.19"
+version = "0.1.20"
 authors = ["bvssvni <bvssvni@gmail.com>"]
 keywords = ["graphics", "2d", "gfx", "piston"]
 description = "A Gfx 2D back-end for the Piston game engine"
@@ -14,48 +14,28 @@ homepage = "https://github.com/PistonDevelopers/gfx_graphics"
 
 name = "gfx_graphics"
 
-[dependencies.piston2d-graphics]
-git = "https://github.com/pistondevelopers/graphics"
-#version = "0.0.47"
 
-[dependencies.piston-shaders_graphics2d]
-#git = "https://github.com/pistondevelopers/shaders"
-version = "0.0.0"
+[dependencies]
+freetype-rs = "0.0.10"
+gfx = "0.6.0"
+piston-shaders_graphics2d = "0.0.0"
+piston-gfx_texture = "0.0.7"
+piston2d-graphics = "0.0.48"
 
-[dependencies.piston-gfx_texture]
-git = "https://github.com/pistondevelopers/gfx_texture"
-#version = "0.0.6"
+# [dev-dependencies]
+# gfx_device_gl = "0.4.0"
+# piston = "0.1.3"
+# pistoncore-glutin_window = "0.0.8"
+# piston_window = "0.0.0"
 
-[dependencies.gfx]
-git = "https://github.com/gfx-rs/gfx-rs"
-#version = "0.5.2"
 
-[dependencies.freetype-rs]
-#git = "https://github.com/PistonDevelopers/freetype-rs.git"
-version = "0.0.10"
-
-[dev-dependencies.piston]
-#git = "https://github.com/pistondevelopers/piston"
-version = "0.1.3"
-
-[dev-dependencies.pistoncore-glutin_window]
-#git = "https://github.com/pistondevelopers/glutin_window"
-version = "0.0.8"
-
-[dev-dependencies.gfx_device_gl]
-git = "https://github.com/gfx-rs/gfx_device_gl"
-#version = "0.3.1"
-
-[dev-dependencies.piston_window]
-git = "https://github.com/pistondevelopers/piston_window"
-
-[features]
-
-default = ["image_png"]
-image_gif = ["piston-gfx_texture/image/gif"]
-image_jpeg = ["piston-gfx_texture/image/jpeg"]
-image_png = ["piston-gfx_texture/image/png"]
-image_ppm = ["piston-gfx_texture/image/ppm"]
-image_tga = ["piston-gfx_texture/image/tga"]
-image_tiff = ["piston-gfx_texture/image/tiff"]
-image_webp = ["piston-gfx_texture/image/webp"]
+# [features]
+# 
+# default = ["image_png"]
+# image_gif = ["piston-gfx_texture/image/gif"]
+# image_jpeg = ["piston-gfx_texture/image/jpeg"]
+# image_png = ["piston-gfx_texture/image/png"]
+# image_ppm = ["piston-gfx_texture/image/ppm"]
+# image_tga = ["piston-gfx_texture/image/tga"]
+# image_tiff = ["piston-gfx_texture/image/tiff"]
+# image_webp = ["piston-gfx_texture/image/webp"]
