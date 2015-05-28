@@ -10,6 +10,7 @@ readme = "README.md"
 repository = "https://github.com/PistonDevelopers/gfx_graphics.git"
 homepage = "https://github.com/PistonDevelopers/gfx_graphics"
 
+
 [lib]
 
 name = "gfx_graphics"
@@ -23,13 +24,13 @@ piston-gfx_texture = "0.0.7"
 piston2d-graphics = "0.0.48"
 
 
-[features]
-
-default = ["image_png"]
-image_gif = ["piston-gfx_texture/image/gif"]
-image_jpeg = ["piston-gfx_texture/image/jpeg"]
-image_png = ["piston-gfx_texture/image/png"]
-image_ppm = ["piston-gfx_texture/image/ppm"]
-image_tga = ["piston-gfx_texture/image/tga"]
-image_tiff = ["piston-gfx_texture/image/tiff"]
-image_webp = ["piston-gfx_texture/image/webp"]
+# [features]
+# 
+# default = ["image_png"]
+# image_gif = ["piston-gfx_texture/image/gif"]
+# image_jpeg = ["piston-gfx_texture/image/jpeg"]
+# image_png = ["piston-gfx_texture/image/png"]
+# image_ppm = ["piston-gfx_texture/image/ppm"]
+# image_tga = ["piston-gfx_texture/image/tga"]
+# image_tiff = ["piston-gfx_texture/image/tiff"]
+# image_webp = ["piston-gfx_texture/image/webp"]
