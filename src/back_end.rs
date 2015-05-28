@@ -36,8 +36,8 @@ gfx_parameters!( ParamsUV {
 pub struct Gfx2d<R: gfx::Resources> {
     buffer_pos: gfx::handle::Buffer<R, f32>,
     buffer_uv: gfx::handle::Buffer<R, f32>,
-    batch: gfx::batch::OwnedBatch<Params<R>>,
-    batch_uv: gfx::batch::OwnedBatch<ParamsUV<R>>,
+    batch: gfx::batch::Full<Params<R>>,
+    batch_uv: gfx::batch::Full<ParamsUV<R>>,
 }
 
 impl<R: gfx::Resources> Gfx2d<R> {
@@ -107,7 +107,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             color: [1.0; 4],
             _r: PhantomData,
         };
-        let mut batch = gfx::batch::OwnedBatch::new(
+        let mut batch = gfx::batch::Full::new(
             mesh,
             program,
             params
@@ -127,7 +127,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             texture: (tex_handle, Some(sampler)),
             _r: PhantomData,
         };
-        let mut batch_uv = gfx::batch::OwnedBatch::new(
+        let mut batch_uv = gfx::batch::Full::new(
             mesh_uv,
             program_uv,
             params_uv
@@ -280,10 +280,10 @@ impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
         } = self;
 
         batch.state = *draw_state;
-        batch.param.color = *color;
+        batch.params.color = *color;
 
         f(&mut |vertices: &[f32]| {
-            renderer.update_buffer(&buffer_pos.raw(), vertices, 0);
+            renderer.update_buffer(&buffer_pos.raw(), vertices, 0).unwrap();
 
             let n = vertices.len() / POS_COMPONENTS;
             batch.slice = gfx::Slice {
@@ -317,16 +317,16 @@ impl<'a, R, C, O> Graphics for GfxGraphics<'a, R, C, O>
         } = self;
 
         batch_uv.state = *draw_state;
-        batch_uv.param.texture.0 = texture.handle();
-        batch_uv.param.color = *color;
+        batch_uv.params.texture.0 = texture.handle();
+        batch_uv.params.color = *color;
 
         f(&mut |vertices: &[f32], texture_coords: &[f32]| {
             assert_eq!(
                 vertices.len() * UV_COMPONENTS,
                 texture_coords.len() * POS_COMPONENTS
             );
-            renderer.update_buffer(&buffer_pos.raw(), vertices, 0);
-            renderer.update_buffer(&buffer_uv.raw(), texture_coords, 0);
+            renderer.update_buffer(&buffer_pos.raw(), vertices, 0).unwrap();
+            renderer.update_buffer(&buffer_uv.raw(), texture_coords, 0).unwrap();
 
             let n = vertices.len() / POS_COMPONENTS;
             batch_uv.slice = gfx::Slice {
