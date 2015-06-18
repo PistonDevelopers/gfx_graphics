@@ -40,9 +40,11 @@ pub struct GlyphCache<R, F> where R: gfx::Resources {
 
 impl<R, F> GlyphCache<R, F> where R: gfx::Resources {
      /// Constructor for a GlyphCache.
-    pub fn new(font: &Path, factory: F) -> Result<Self, Error> {
+    pub fn new<P>(font: P, factory: F) -> Result<Self, Error>
+        where P: AsRef<Path>
+    {
         let freetype = try!(ft::Library::init());
-        let face = try!(freetype.new_face(font, 0));
+        let face = try!(freetype.new_face(font.as_ref(), 0));
         Ok(GlyphCache {
             face: face,
             factory: factory,
