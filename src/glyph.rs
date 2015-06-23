@@ -7,7 +7,7 @@ use std::collections::hash_map::{ HashMap, Entry };
 use graphics::character::{ CharacterCache, Character };
 use graphics::types::FontSize;
 use self::ft::render_mode::RenderMode;
-use { gfx, Texture };
+use { gfx, Texture, TextureSettings };
 
 /// An enum to represent various possible run-time errors that may occur.
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -89,7 +89,8 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
                                 bitmap.buffer(),
                                 bitmap.width() as u32,
                                 bitmap.rows() as u32,
-                            )
+                                &TextureSettings::new()
+                            ).unwrap()
                         }
                     },
                 })
