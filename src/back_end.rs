@@ -153,11 +153,11 @@ impl<R: gfx::Resources> Gfx2d<R> {
         renderer: &mut gfx::Renderer<R, C>,
         output: &O,
         viewport: Viewport,
-        mut f: F
+        f: F
     )
         where C: gfx::CommandBuffer<R>,
               O: gfx::Output<R>,
-              F: FnMut(Context, &mut GfxGraphics<R, C, O>)
+              F: FnOnce(Context, &mut GfxGraphics<R, C, O>)
     {
         let ref mut g = GfxGraphics::new(
             renderer,
