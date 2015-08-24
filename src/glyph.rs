@@ -68,15 +68,15 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
                 self.face.load_char(ch as usize, ft::face::DEFAULT).unwrap();
                 let glyph = self.face.glyph().get_glyph().unwrap();
                 let bitmap_glyph = glyph.to_bitmap(RenderMode::Normal, None).unwrap();
-                let glyph_size = glyph.advance();
+                let glyph_size = [glyph.advance_x(), glyph.advance_y()];
                 v.insert(Character {
                     offset: [
                         bitmap_glyph.left() as f64,
                         bitmap_glyph.top() as f64
                     ],
                     size: [
-                        (glyph_size.x >> 16) as f64,
-                        (glyph_size.y >> 16) as f64
+                        (glyph_size[0] >> 16) as f64,
+                        (glyph_size[1] >> 16) as f64
                     ],
                     texture: {
                         let bitmap = bitmap_glyph.bitmap();
