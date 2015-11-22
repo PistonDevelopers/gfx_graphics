@@ -11,6 +11,7 @@ extern crate shaders_graphics2d as shaders;
 pub use gfx_texture::*;
 
 pub use back_end::{ Gfx2d, GfxGraphics };
+pub use glyph::Error as GlyphError;
 pub use glyph::GlyphCache;
 
 mod back_end;
