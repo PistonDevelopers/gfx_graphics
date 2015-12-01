@@ -1,7 +1,7 @@
 [package]
 
 name = "piston2d-gfx_graphics"
-version = "0.15.0"
+version = "0.16.0"
 authors = ["bvssvni <bvssvni@gmail.com>"]
 keywords = ["graphics", "2d", "gfx", "piston"]
 description = "A Gfx 2D back-end for the Piston game engine"
@@ -20,17 +20,6 @@ name = "gfx_graphics"
 freetype-rs = "0.4.0"
 gfx = "0.8.0"
 piston-shaders_graphics2d = "0.1.0"
-piston-gfx_texture = "0.6.0"
-piston2d-graphics = "0.11.0"
+piston-gfx_texture = "0.6.1"
+piston2d-graphics = "0.12.0"
 
-
-# [features]
-# 
-# default = ["image_png"]
-# image_gif = ["piston-gfx_texture/image/gif"]
-# image_jpeg = ["piston-gfx_texture/image/jpeg"]
-# image_png = ["piston-gfx_texture/image/png"]
-# image_ppm = ["piston-gfx_texture/image/ppm"]
-# image_tga = ["piston-gfx_texture/image/tga"]
-# image_tiff = ["piston-gfx_texture/image/tiff"]
-# image_webp = ["piston-gfx_texture/image/webp"]
