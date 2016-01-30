@@ -1,6 +1,7 @@
 use graphics::{ Context, DrawState, Graphics, Viewport };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use { gfx, Texture };
+use gfx::format::{DepthStencil, Rgba8};
 use shader_version::{ OpenGL, Shaders };
 use shader_version::glsl::GLSL;
 
@@ -43,6 +44,7 @@ pub struct Gfx2d<R: gfx::Resources> {
     buffer_uv: gfx::handle::Buffer<R, f32>,
     pso_colored: gfx::pso::PipelineState<R, pipe_colored::Meta>,
     pso_textured: gfx::pso::PipelineState<R, pipe_textured::Meta>,
+    sampler: gfx::handle::Sampler<R>,
 }
 
 impl<R: gfx::Resources> Gfx2d<R> {
@@ -90,27 +92,32 @@ impl<R: gfx::Resources> Gfx2d<R> {
             gfx::BufferRole::Vertex
         );
 
+        let sampler_info = gfx::tex::SamplerInfo::new(
+            gfx::tex::FilterMethod::Bilinear,
+            gfx::tex::WrapMode::Clamp
+        );
+        let sampler = factory.create_sampler(sampler_info);
+
         Gfx2d {
             buffer_pos: buffer_pos,
             buffer_uv: buffer_uv,
             pso_colored: pso_colored,
             pso_textured: pso_textured,
+            sampler: sampler
         }
     }
 
     /// Renders graphics to a Gfx renderer.
-    pub fn draw<C, Cf, Df, F>(
+    pub fn draw<C, F>(
         &mut self,
         encoder: &mut gfx::Encoder<R, C>,
-        output_color: &gfx::handle::RenderTargetView<R, Cf>,
-        output_stencil: &gfx::handle::DepthStencilView<R, Df>,
+        output_color: &gfx::handle::RenderTargetView<R, Rgba8>,
+        output_stencil: &gfx::handle::DepthStencilView<R, DepthStencil>,
         viewport: Viewport,
         f: F
     )
         where C: gfx::CommandBuffer<R>,
-              Cf: gfx::format::RenderFormat,
-              Df: gfx::format::StencilFormat,
-              F: FnOnce(Context, &mut GfxGraphics<R, C, Cf, Df>)
+              F: FnOnce(Context, &mut GfxGraphics<R, C>)
     {
         let ref mut g = GfxGraphics::new(
             encoder,
@@ -124,11 +131,9 @@ impl<R: gfx::Resources> Gfx2d<R> {
 }
 
 /// Used for rendering 2D graphics.
-pub struct GfxGraphics<'a, R, C, Cf, Df>
+pub struct GfxGraphics<'a, R, C>
     where R: gfx::Resources + 'a,
           C: gfx::CommandBuffer<R> + 'a,
-          Cf: gfx::format::RenderFormat + 'a,
-          Df: gfx::format::StencilFormat + 'a,
           R::Buffer: 'a,
           R::Shader: 'a,
           R::Program: 'a,
@@ -136,21 +141,19 @@ pub struct GfxGraphics<'a, R, C, Cf, Df>
           R::Sampler: 'a
 {
     encoder: &'a mut gfx::Encoder<R, C>,
-    output_color: &'a gfx::handle::RenderTargetView<R, Cf>,
-    output_stencil: &'a gfx::handle::DepthStencilView<R, Df>,
+    output_color: &'a gfx::handle::RenderTargetView<R, Rgba8>,
+    output_stencil: &'a gfx::handle::DepthStencilView<R, DepthStencil>,
     g2d: &'a mut Gfx2d<R>,
 }
 
-impl<'a, R, C, Cf, Df> GfxGraphics<'a, R, C, Cf, Df>
+impl<'a, R, C> GfxGraphics<'a, R, C>
     where R: gfx::Resources,
           C: gfx::CommandBuffer<R>,
-          Cf: gfx::format::RenderFormat,
-          Df: gfx::format::StencilFormat,
 {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(encoder: &'a mut gfx::Encoder<R, C>,
-               output_color: &'a gfx::handle::RenderTargetView<R, Cf>,
-               output_stencil: &'a gfx::handle::DepthStencilView<R, Df>,
+               output_color: &'a gfx::handle::RenderTargetView<R, Rgba8>,
+               output_stencil: &'a gfx::handle::DepthStencilView<R, DepthStencil>,
                g2d: &'a mut Gfx2d<R>) -> Self {
         GfxGraphics {
             encoder: encoder,
@@ -183,11 +186,9 @@ impl<'a, R, C, Cf, Df> GfxGraphics<'a, R, C, Cf, Df>
     }
 }
 
-impl<'a, R, C, Cf, Df> Graphics for GfxGraphics<'a, R, C, Cf, Df>
+impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     where R: gfx::Resources,
           C: gfx::CommandBuffer<R>,
-          Cf: gfx::format::RenderFormat,
-          Df: gfx::format::StencilFormat,
           R::Buffer: 'a,
           R::Shader: 'a,
           R::Program: 'a,
@@ -230,15 +231,18 @@ impl<'a, R, C, Cf, Df> Graphics for GfxGraphics<'a, R, C, Cf, Df>
                 ref mut pso_colored,
                 ..
             },
+            ..
         } = self;
 
         // TODO: Update draw state.
 
         f(&mut |vertices: &[f32]| {
-            encoder.update_buffer(&buffer_pos.raw(), vertices, 0).unwrap();
+            use std::mem::transmute;
+
+            encoder.update_buffer(&buffer_pos, vertices, 0).unwrap();
 
             let data = pipe_colored::Data {
-                pos: buffer_pos,
+                pos: unsafe { transmute(buffer_pos.clone()) },
                 color: *color,
                 out_color: output_color.clone(),
             };
@@ -270,13 +274,17 @@ impl<'a, R, C, Cf, Df> Graphics for GfxGraphics<'a, R, C, Cf, Df>
                 ref mut buffer_pos,
                 ref mut buffer_uv,
                 ref mut pso_textured,
+                ref sampler,
                 ..
             },
+            ..
         } = self;
 
         // TODO: Update draw state.
 
         f(&mut |vertices: &[f32], texture_coords: &[f32]| {
+            use std::mem::transmute;
+
             assert_eq!(
                 vertices.len() * UV_COMPONENTS,
                 texture_coords.len() * POS_COMPONENTS
@@ -285,11 +293,11 @@ impl<'a, R, C, Cf, Df> Graphics for GfxGraphics<'a, R, C, Cf, Df>
             encoder.update_buffer(&buffer_uv, texture_coords, 0).unwrap();
 
             let data = pipe_textured::Data {
-                pos: buffer_pos.clone(),
-                uv: buffer_uv.clone(),
+                pos: unsafe { transmute(buffer_pos.clone()) },
+                uv: unsafe { transmute(buffer_uv.clone()) },
                 color: *color,
-                texture: texture.view,
-                out_color: *output_color,
+                texture: (texture.view.clone(), sampler.clone()),
+                out_color: output_color.clone(),
             };
 
             let n = vertices.len() / POS_COMPONENTS;
