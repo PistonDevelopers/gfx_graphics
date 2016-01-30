@@ -23,3 +23,9 @@ piston-shaders_graphics2d = "0.1.0"
 piston-gfx_texture = "0.7.0"
 piston2d-graphics = "0.13.0"
 shader_version = "0.2.1"
+
+[dev-dependencies]
+pistoncore-glutin_window = "0.20.0"
+piston = "0.17.0"
+find_folder = "0.3.0"
+gfx_device_gl = "0.8.0"

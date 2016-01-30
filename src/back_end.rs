@@ -40,8 +40,8 @@ gfx_pipeline!( pipe_textured {
 
 /// The data used for drawing 2D graphics.
 pub struct Gfx2d<R: gfx::Resources> {
-    buffer_pos: gfx::handle::Buffer<R, f32>,
-    buffer_uv: gfx::handle::Buffer<R, f32>,
+    buffer_pos: gfx::handle::Buffer<R, PositionFormat>,
+    buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
     pso_colored: gfx::pso::PipelineState<R, pipe_colored::Meta>,
     pso_textured: gfx::pso::PipelineState<R, pipe_textured::Meta>,
     sampler: gfx::handle::Sampler<R>,
@@ -239,10 +239,13 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         f(&mut |vertices: &[f32]| {
             use std::mem::transmute;
 
-            encoder.update_buffer(&buffer_pos, vertices, 0).unwrap();
+            unsafe {
+                encoder.update_buffer(&buffer_pos, transmute(vertices), 0)
+                    .unwrap();
+            }
 
             let data = pipe_colored::Data {
-                pos: unsafe { transmute(buffer_pos.clone()) },
+                pos: buffer_pos.clone(),
                 color: *color,
                 out_color: output_color.clone(),
             };
@@ -289,12 +292,16 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 vertices.len() * UV_COMPONENTS,
                 texture_coords.len() * POS_COMPONENTS
             );
-            encoder.update_buffer(&buffer_pos, vertices, 0).unwrap();
-            encoder.update_buffer(&buffer_uv, texture_coords, 0).unwrap();
+            unsafe {
+                encoder.update_buffer(&buffer_pos, transmute(vertices), 0)
+                    .unwrap();
+                encoder.update_buffer(&buffer_uv, transmute(texture_coords), 0)
+                    .unwrap();
+            }
 
             let data = pipe_textured::Data {
-                pos: unsafe { transmute(buffer_pos.clone()) },
-                uv: unsafe { transmute(buffer_uv.clone()) },
+                pos: buffer_pos.clone(),
+                uv: buffer_uv.clone(),
                 color: *color,
                 texture: (texture.view.clone(), sampler.clone()),
                 out_color: output_color.clone(),
