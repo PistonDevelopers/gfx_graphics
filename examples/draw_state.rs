@@ -10,7 +10,7 @@ use gfx::traits::*;
 use glutin_window::{GlutinWindow, OpenGL};
 use piston::window::{OpenGLWindow, Window, WindowSettings};
 use piston::event_loop::Events;
-use graphics::draw_state::preset::blend::*;
+use graphics::draw_state::Blend;
 use graphics::*;
 use piston::input::*;
 use gfx_graphics::{Flip, Gfx2d, Texture, TextureSettings};
@@ -41,7 +41,7 @@ fn main() {
 
     let assets = find_folder::Search::ParentsThenKids(3, 3)
         .for_folder("assets").unwrap();
-    let blends = [ADD, ALPHA, INVERT, MULTIPLY];
+    let blends = [Blend::Add, Blend::Alpha, Blend::Invert, Blend::Multiply];
     let mut blend = 0;
     let mut clip_inside = true;
     let rust_logo = Texture::from_path(&mut factory,
@@ -73,10 +73,10 @@ fn main() {
 
                 let transform = c.transform.trans(200.0, 200.0);
                 Ellipse::new([1.0, 0.0, 0.0, 1.0])
-                    .draw([0.0, 0.0, 50.0, 50.0], clip_draw_state(), transform, g);
+                    .draw([0.0, 0.0, 50.0, 50.0], &DrawState::new_clip(), transform, g);
                 Image::new().draw(&rust_logo,
-                    if clip_inside { inside_draw_state() }
-                    else { outside_draw_state() },
+                    &if clip_inside { DrawState::new_inside() }
+                    else { DrawState::new_outside() },
                     transform, g);
             });
             device.submit(encoder.as_buffer());
