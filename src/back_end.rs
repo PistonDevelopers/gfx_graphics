@@ -36,6 +36,9 @@ gfx_pipeline!( pipe_textured {
     color: gfx::Global<[f32; 4]> = "color",
     texture: gfx::TextureSampler<[f32; 4]> = "s_texture",
     out_color: gfx::RenderTarget<gfx::format::Rgba8> = "o_Color",
+    blend_target: gfx::BlendTarget<gfx::format::Rgba8> =
+        ("o_Color", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
+    blend_ref: gfx::BlendRef = (),
 });
 
 /// The data used for drawing 2D graphics.
@@ -305,6 +308,8 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 color: *color,
                 texture: (texture.view.clone(), sampler.clone()),
                 out_color: output_color.clone(),
+                blend_target: output_color.clone(),
+                blend_ref: [1.0; 4],
             };
 
             let n = vertices.len() / POS_COMPONENTS;
