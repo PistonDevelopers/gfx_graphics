@@ -41,7 +41,7 @@ fn main() {
 
     let assets = find_folder::Search::ParentsThenKids(3, 3)
         .for_folder("assets").unwrap();
-    let blends = [Blend::Add, Blend::Alpha, Blend::Invert, Blend::Multiply];
+    let blends = [Blend::Alpha, Blend::Add, Blend::Invert, Blend::Multiply];
     let mut blend = 0;
     let mut clip_inside = true;
     let rust_logo = Texture::from_path(&mut factory,
@@ -88,7 +88,7 @@ fn main() {
 
         if let Some(Button::Keyboard(Key::A)) = e.press_args() {
             blend = (blend + 1) % blends.len();
-            println!("Changed blending to {:?}", blend);
+            println!("Changed blending to {:?}", blends[blend]);
         }
 
         if let Some(Button::Keyboard(Key::S)) = e.press_args() {

@@ -2,6 +2,7 @@ use graphics::{ Context, DrawState, Graphics, Viewport };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use { gfx, Texture };
 use gfx::format::{DepthStencil, Rgba8};
+use gfx::pso::PipelineState;
 use shader_version::{ OpenGL, Shaders };
 use shader_version::glsl::GLSL;
 
@@ -24,11 +25,11 @@ gfx_vertex_struct!( TexCoordsFormat {
     uv: [f32; 2] = "uv",
 });
 
-gfx_pipeline!( pipe_colored {
-    pos: gfx::VertexBuffer<PositionFormat> = (),
-    color: gfx::Global<[f32; 4]> = "color",
-    blend_target: gfx::BlendTarget<gfx::format::Rgba8> =
-        ("o_Color", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
+gfx_pipeline_base!( pipe_colored {
+    pos: gfx::VertexBuffer<PositionFormat>,
+    color: gfx::Global<[f32; 4]>,
+    blend_target: gfx::BlendTarget<gfx::format::Rgba8>,
+    blend_ref: gfx::BlendRef,
 });
 
 gfx_pipeline!( pipe_textured {
@@ -45,7 +46,11 @@ gfx_pipeline!( pipe_textured {
 pub struct Gfx2d<R: gfx::Resources> {
     buffer_pos: gfx::handle::Buffer<R, PositionFormat>,
     buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
-    pso_colored: gfx::pso::PipelineState<R, pipe_colored::Meta>,
+    pso_colored_blend_alpha: PipelineState<R, pipe_colored::Meta>,
+    pso_colored_blend_add: PipelineState<R, pipe_colored::Meta>,
+    pso_colored_blend_multiply: PipelineState<R, pipe_colored::Meta>,
+    pso_colored_blend_invert: PipelineState<R, pipe_colored::Meta>,
+    pso_colored_blend_none: PipelineState<R, pipe_colored::Meta>,
     pso_textured: gfx::pso::PipelineState<R, pipe_textured::Meta>,
     sampler: gfx::handle::Sampler<R>,
 }
@@ -55,23 +60,59 @@ impl<R: gfx::Resources> Gfx2d<R> {
     pub fn new<F>(opengl: OpenGL, factory: &mut F) -> Self
         where F: gfx::Factory<R>
     {
+        use gfx::Primitive;
+        use gfx::state::Rasterizer;
+        use gfx::state::{Blend, BlendChannel, Equation, Factor};
+        use gfx::preset::blend;
         use gfx::traits::*;
         use shaders::{ colored, textured };
 
         let glsl = opengl.to_glsl();
 
-        let pso_colored = factory.create_pipeline_simple(
-            Shaders::new()
-                .set(GLSL::V1_20, colored::VERTEX_GLSL_120)
-                .set(GLSL::V1_50, colored::VERTEX_GLSL_150_CORE)
-                .get(glsl).unwrap(),
-            Shaders::new()
-                .set(GLSL::V1_20, colored::FRAGMENT_GLSL_120)
-                .set(GLSL::V1_50, colored::FRAGMENT_GLSL_150_CORE)
-                .get(glsl).unwrap(),
-            gfx::state::CullFace::Nothing,
-            pipe_colored::new()
-        ).unwrap();
+        let colored_shader_set = factory.create_shader_set(
+                Shaders::new()
+                    .set(GLSL::V1_20, colored::VERTEX_GLSL_120)
+                    .set(GLSL::V1_50, colored::VERTEX_GLSL_150_CORE)
+                    .get(glsl).unwrap(),
+                Shaders::new()
+                    .set(GLSL::V1_20, colored::FRAGMENT_GLSL_120)
+                    .set(GLSL::V1_50, colored::FRAGMENT_GLSL_150_CORE)
+                    .get(glsl).unwrap(),
+            ).unwrap();
+
+        let colored_pipeline = |factory: &mut F, blend_preset: Blend|
+        -> PipelineState<R, pipe_colored::Meta> {
+            factory.create_pipeline_state(
+                &colored_shader_set,
+                Primitive::TriangleList,
+                Rasterizer::new_fill(gfx::state::CullFace::Nothing),
+                pipe_colored::Init {
+                    pos: (),
+                    color: "color",
+                    blend_target: ("o_Color", gfx::state::MASK_ALL,
+                        blend_preset),
+                    blend_ref: (),
+                }
+            ).unwrap()
+        };
+
+        let pso_colored_blend_alpha = colored_pipeline(factory, blend::ALPHA);
+        let pso_colored_blend_add = colored_pipeline(factory, blend::ADD);
+        let pso_colored_blend_multiply = colored_pipeline(factory, blend::MULTIPLY);
+        let pso_colored_blend_invert = colored_pipeline(factory, blend::INVERT);
+        // Fake disabled blending using the same pipeline.
+        let pso_colored_blend_none = colored_pipeline(factory, Blend {
+            color: BlendChannel {
+                equation: Equation::Add,
+                source: Factor::One,
+                destination: Factor::Zero,
+            },
+            alpha: BlendChannel {
+                equation: Equation::Add,
+                source: Factor::One,
+                destination: Factor::Zero,
+            },
+        });
 
         let pso_textured = factory.create_pipeline_simple(
             Shaders::new()
@@ -104,7 +145,11 @@ impl<R: gfx::Resources> Gfx2d<R> {
         Gfx2d {
             buffer_pos: buffer_pos,
             buffer_uv: buffer_uv,
-            pso_colored: pso_colored,
+            pso_colored_blend_alpha: pso_colored_blend_alpha,
+            pso_colored_blend_add: pso_colored_blend_add,
+            pso_colored_blend_multiply: pso_colored_blend_multiply,
+            pso_colored_blend_invert: pso_colored_blend_invert,
+            pso_colored_blend_none: pso_colored_blend_none,
             pso_textured: pso_textured,
             sampler: sampler
         }
@@ -226,18 +271,31 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     )
         where F: FnMut(&mut FnMut(&[f32]))
     {
+        use graphics::draw_state::Blend;
+
         let &mut GfxGraphics {
             ref mut encoder,
             output_color,
             g2d: &mut Gfx2d {
                 ref mut buffer_pos,
-                ref mut pso_colored,
+                ref mut pso_colored_blend_alpha,
+                ref mut pso_colored_blend_add,
+                ref mut pso_colored_blend_multiply,
+                ref mut pso_colored_blend_invert,
+                ref mut pso_colored_blend_none,
                 ..
             },
             ..
         } = self;
 
         // TODO: Update draw state.
+        let pso_colored = match draw_state.blend {
+            Some(Blend::Alpha) => pso_colored_blend_alpha,
+            Some(Blend::Add) => pso_colored_blend_add,
+            Some(Blend::Multiply) => pso_colored_blend_multiply,
+            Some(Blend::Invert) => pso_colored_blend_invert,
+            None => pso_colored_blend_none
+        };
 
         f(&mut |vertices: &[f32]| {
             use std::mem::transmute;
@@ -251,6 +309,8 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 pos: buffer_pos.clone(),
                 color: *color,
                 blend_target: output_color.clone(),
+                // Use white color for blend reference to make invert work.
+                blend_ref: [1.0; 4],
             };
 
             let n = vertices.len() / POS_COMPONENTS;
