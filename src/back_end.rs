@@ -27,7 +27,8 @@ gfx_vertex_struct!( TexCoordsFormat {
 gfx_pipeline!( pipe_colored {
     pos: gfx::VertexBuffer<PositionFormat> = (),
     color: gfx::Global<[f32; 4]> = "color",
-    out_color: gfx::RenderTarget<gfx::format::Rgba8> = "o_Color",
+    blend_target: gfx::BlendTarget<gfx::format::Rgba8> =
+        ("o_Color", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
 });
 
 gfx_pipeline!( pipe_textured {
@@ -35,7 +36,6 @@ gfx_pipeline!( pipe_textured {
     uv: gfx::VertexBuffer<TexCoordsFormat> = (),
     color: gfx::Global<[f32; 4]> = "color",
     texture: gfx::TextureSampler<[f32; 4]> = "s_texture",
-    out_color: gfx::RenderTarget<gfx::format::Rgba8> = "o_Color",
     blend_target: gfx::BlendTarget<gfx::format::Rgba8> =
         ("o_Color", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
     blend_ref: gfx::BlendRef = (),
@@ -250,7 +250,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             let data = pipe_colored::Data {
                 pos: buffer_pos.clone(),
                 color: *color,
-                out_color: output_color.clone(),
+                blend_target: output_color.clone(),
             };
 
             let n = vertices.len() / POS_COMPONENTS;
@@ -307,7 +307,6 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 uv: buffer_uv.clone(),
                 color: *color,
                 texture: (texture.view.clone(), sampler.clone()),
-                out_color: output_color.clone(),
                 blend_target: output_color.clone(),
                 blend_ref: [1.0; 4],
             };
