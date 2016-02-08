@@ -90,7 +90,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
         use gfx::Primitive;
         use gfx::state::Rasterizer;
         use gfx::state::{Blend, BlendChannel, Comparison, Equation, Factor,
-            Stencil, StencilOp, StencilSide};
+            Stencil, StencilOp};
         use gfx::preset::blend;
         use gfx::traits::*;
         use shaders::{ colored, textured };
@@ -411,7 +411,6 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             ..
         } = self;
 
-        // TODO: Update draw state.
         let blend = draw_state.blend;
         let (pso_colored, stencil_val) = match draw_state.stencil {
             None => (colored.blend(blend), 0),
@@ -486,7 +485,6 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             ..
         } = self;
 
-        // TODO: Update draw state.
         let blend = draw_state.blend;
         let (pso_textured, stencil_val) = match draw_state.stencil {
             None => (textured.blend(blend), 0),
