@@ -29,6 +29,7 @@ gfx_pipeline_base!( pipe_colored {
     pos: gfx::VertexBuffer<PositionFormat>,
     color: gfx::Global<[f32; 4]>,
     blend_target: gfx::BlendTarget<gfx::format::Rgba8>,
+    stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
     blend_ref: gfx::BlendRef,
     scissor: gfx::Scissor,
 });
@@ -71,6 +72,9 @@ pub struct Gfx2d<R: gfx::Resources> {
     buffer_pos: gfx::handle::Buffer<R, PositionFormat>,
     buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
     colored: PsoBlend<PipelineState<R, pipe_colored::Meta>>,
+    colored_clip: PsoBlend<PipelineState<R, pipe_colored::Meta>>,
+    colored_inside: PsoBlend<PipelineState<R, pipe_colored::Meta>>,
+    colored_outside: PsoBlend<PipelineState<R, pipe_colored::Meta>>,
     textured: PsoBlend<PipelineState<R, pipe_textured::Meta>>,
     textured_clip: PsoBlend<PipelineState<R, pipe_textured::Meta>>,
     textured_inside: PsoBlend<PipelineState<R, pipe_textured::Meta>>,
@@ -137,7 +141,10 @@ impl<R: gfx::Resources> Gfx2d<R> {
                     .get(glsl).unwrap(),
             ).unwrap();
 
-        let colored_pipeline = |factory: &mut F, blend_preset: Blend|
+        let colored_pipeline = |factory: &mut F,
+                                blend_preset: Blend,
+                                stencil: Stencil,
+                                color_mask: gfx::state::ColorMask|
         -> PipelineState<R, pipe_colored::Meta> {
             factory.create_pipeline_state(
                 &colored_shader_set,
@@ -146,8 +153,8 @@ impl<R: gfx::Resources> Gfx2d<R> {
                 pipe_colored::Init {
                     pos: (),
                     color: "color",
-                    blend_target: ("o_Color", gfx::state::MASK_ALL,
-                        blend_preset),
+                    blend_target: ("o_Color", color_mask, blend_preset),
+                    stencil_target: stencil,
                     blend_ref: (),
                     scissor: (),
                 }
@@ -169,11 +176,32 @@ impl<R: gfx::Resources> Gfx2d<R> {
         };
 
         let colored = PsoBlend {
-            alpha: colored_pipeline(factory, blend::ALPHA),
-            add: colored_pipeline(factory, blend::ADD),
-            multiply: colored_pipeline(factory, blend::MULTIPLY),
-            invert: colored_pipeline(factory, blend::INVERT),
-            none: colored_pipeline(factory, no_blend),
+            alpha: colored_pipeline(factory, blend::ALPHA, stencil, mask_all),
+            add: colored_pipeline(factory, blend::ADD, stencil, mask_all),
+            multiply: colored_pipeline(factory, blend::MULTIPLY, stencil, mask_all),
+            invert: colored_pipeline(factory, blend::INVERT, stencil, mask_all),
+            none: colored_pipeline(factory, no_blend, stencil, mask_all),
+        };
+        let colored_clip = PsoBlend {
+            alpha: colored_pipeline(factory, blend::ALPHA, stencil_clip, mask_none),
+            add: colored_pipeline(factory, blend::ADD, stencil_clip, mask_none),
+            multiply: colored_pipeline(factory, blend::MULTIPLY, stencil_clip, mask_none),
+            invert: colored_pipeline(factory, blend::INVERT, stencil_clip, mask_none),
+            none: colored_pipeline(factory, no_blend, stencil_clip, mask_none),
+        };
+        let colored_inside = PsoBlend {
+            alpha: colored_pipeline(factory, blend::ALPHA, stencil_inside, mask_all),
+            add: colored_pipeline(factory, blend::ADD, stencil_inside, mask_all),
+            multiply: colored_pipeline(factory, blend::MULTIPLY, stencil_inside, mask_all),
+            invert: colored_pipeline(factory, blend::INVERT, stencil_inside, mask_all),
+            none: colored_pipeline(factory, no_blend, stencil_inside, mask_all),
+        };
+        let colored_outside = PsoBlend {
+            alpha: colored_pipeline(factory, blend::ALPHA, stencil_outside, mask_all),
+            add: colored_pipeline(factory, blend::ADD, stencil_outside, mask_all),
+            multiply: colored_pipeline(factory, blend::MULTIPLY, stencil_outside, mask_all),
+            invert: colored_pipeline(factory, blend::INVERT, stencil_outside, mask_all),
+            none: colored_pipeline(factory, no_blend, stencil_outside, mask_all),
         };
 
         let textured_shader_set = factory.create_shader_set(
@@ -257,6 +285,9 @@ impl<R: gfx::Resources> Gfx2d<R> {
             buffer_pos: buffer_pos,
             buffer_uv: buffer_uv,
             colored: colored,
+            colored_clip: colored_clip,
+            colored_inside: colored_inside,
+            colored_outside: colored_outside,
             textured: textured,
             textured_clip: textured_clip,
             textured_inside: textured_inside,
@@ -381,22 +412,33 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     )
         where F: FnMut(&mut FnMut(&[f32]))
     {
+        use graphics::draw_state::Stencil;
         use gfx::core::target::Rect;
         use std::u16;
 
         let &mut GfxGraphics {
             ref mut encoder,
             output_color,
+            output_stencil,
             g2d: &mut Gfx2d {
                 ref mut buffer_pos,
                 ref mut colored,
+                ref mut colored_clip,
+                ref mut colored_inside,
+                ref mut colored_outside,
                 ..
             },
             ..
         } = self;
 
         // TODO: Update draw state.
-        let pso_colored = colored.blend(draw_state.blend);
+        let blend = draw_state.blend;
+        let (pso_colored, stencil_val) = match draw_state.stencil {
+            None => (colored.blend(blend), 0),
+            Some(Stencil::Clip(val)) => (colored_clip.blend(blend), val),
+            Some(Stencil::Inside(val)) => (colored_inside.blend(blend), val),
+            Some(Stencil::Outside(val)) => (colored_outside.blend(blend), val),
+        };
 
         let scissor = match draw_state.scissor {
             None => Rect { x: 0, y: 0, w: u16::MAX, h: u16::MAX },
@@ -416,6 +458,8 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 pos: buffer_pos.clone(),
                 color: *color,
                 blend_target: output_color.clone(),
+                stencil_target: (output_stencil.clone(),
+                                 (stencil_val, stencil_val)),
                 // Use white color for blend reference to make invert work.
                 blend_ref: [1.0; 4],
                 scissor: scissor,
