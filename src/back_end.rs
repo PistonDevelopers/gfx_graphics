@@ -39,6 +39,7 @@ gfx_pipeline_base!( pipe_textured {
     color: gfx::Global<[f32; 4]>,
     texture: gfx::TextureSampler<[f32; 4]>,
     blend_target: gfx::BlendTarget<gfx::format::Rgba8>,
+    stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
     blend_ref: gfx::BlendRef,
     scissor: gfx::Scissor,
 });
@@ -52,11 +53,30 @@ pub struct Gfx2d<R: gfx::Resources> {
     pso_colored_blend_multiply: PipelineState<R, pipe_colored::Meta>,
     pso_colored_blend_invert: PipelineState<R, pipe_colored::Meta>,
     pso_colored_blend_none: PipelineState<R, pipe_colored::Meta>,
-    pso_textured_blend_alpha: gfx::pso::PipelineState<R, pipe_textured::Meta>,
-    pso_textured_blend_add: gfx::pso::PipelineState<R, pipe_textured::Meta>,
-    pso_textured_blend_multiply: gfx::pso::PipelineState<R, pipe_textured::Meta>,
-    pso_textured_blend_invert: gfx::pso::PipelineState<R, pipe_textured::Meta>,
-    pso_textured_blend_none: gfx::pso::PipelineState<R, pipe_textured::Meta>,
+    // Textured, no clipping.
+    pso_textured_blend_alpha: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_add: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_multiply: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_invert: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_none: PipelineState<R, pipe_textured::Meta>,
+    // Textured, clip.
+    pso_textured_blend_alpha_clip: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_add_clip: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_multiply_clip: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_invert_clip: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_none_clip: PipelineState<R, pipe_textured::Meta>,
+    // Textured, inside.
+    pso_textured_blend_alpha_inside: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_add_inside: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_multiply_inside: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_invert_inside: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_none_inside: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_alpha_outside: PipelineState<R, pipe_textured::Meta>,
+    // Textured, outside.
+    pso_textured_blend_add_outside: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_multiply_outside: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_invert_outside: PipelineState<R, pipe_textured::Meta>,
+    pso_textured_blend_none_outside: PipelineState<R, pipe_textured::Meta>,
     sampler: gfx::handle::Sampler<R>,
 }
 
@@ -67,10 +87,21 @@ impl<R: gfx::Resources> Gfx2d<R> {
     {
         use gfx::Primitive;
         use gfx::state::Rasterizer;
-        use gfx::state::{Blend, BlendChannel, Equation, Factor};
+        use gfx::state::{Blend, BlendChannel, Comparison, Equation, Factor,
+            Stencil, StencilOp};
         use gfx::preset::blend;
         use gfx::traits::*;
         use shaders::{ colored, textured };
+
+        let stencil = Stencil::new(Comparison::Always, 0,
+            (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
+        let stencil_clip = Stencil::new(Comparison::Never, 255,
+            (StencilOp::Replace, StencilOp::Keep, StencilOp::Keep));
+        // TODO: Difference in mask_read (255) and mask_write (0)?
+        let stencil_inside = Stencil::new(Comparison::Equal, 255,
+            (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
+        let stencil_outside = Stencil::new(Comparison::NotEqual, 255,
+            (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
 
         let glsl = opengl.to_glsl();
 
@@ -133,7 +164,9 @@ impl<R: gfx::Resources> Gfx2d<R> {
                     .get(glsl).unwrap()
             ).unwrap();
 
-        let textured_pipeline = |factory: &mut F, blend_preset: Blend|
+        let textured_pipeline = |factory: &mut F,
+                                 blend_preset: Blend,
+                                 stencil: Stencil|
         -> PipelineState<R, pipe_textured::Meta> {
             factory.create_pipeline_state(
                 &textured_shader_set,
@@ -146,17 +179,57 @@ impl<R: gfx::Resources> Gfx2d<R> {
                     texture: "s_texture",
                     blend_target: ("o_Color", gfx::state::MASK_ALL,
                         blend_preset),
+                    stencil_target: stencil,
                     blend_ref: (),
                     scissor: (),
                 }
             ).unwrap()
         };
 
-        let pso_textured_blend_alpha = textured_pipeline(factory, blend::ALPHA);
-        let pso_textured_blend_add = textured_pipeline(factory, blend::ADD);
-        let pso_textured_blend_multiply = textured_pipeline(factory, blend::MULTIPLY);
-        let pso_textured_blend_invert = textured_pipeline(factory, blend::INVERT);
-        let pso_textured_blend_none = textured_pipeline(factory, no_blend);
+        // Textured, no clipping.
+        let pso_textured_blend_alpha = textured_pipeline(
+            factory, blend::ALPHA, stencil);
+        let pso_textured_blend_add = textured_pipeline(
+            factory, blend::ADD, stencil);
+        let pso_textured_blend_multiply = textured_pipeline(
+            factory, blend::MULTIPLY, stencil);
+        let pso_textured_blend_invert = textured_pipeline(
+            factory, blend::INVERT, stencil);
+        let pso_textured_blend_none = textured_pipeline(
+            factory, no_blend, stencil);
+        // Textured, clip.
+        let pso_textured_blend_alpha_clip = textured_pipeline(
+            factory, blend::ALPHA, stencil_clip);
+        let pso_textured_blend_add_clip = textured_pipeline(
+            factory, blend::ADD, stencil_clip);
+        let pso_textured_blend_multiply_clip = textured_pipeline(
+            factory, blend::MULTIPLY, stencil_clip);
+        let pso_textured_blend_invert_clip = textured_pipeline(
+            factory, blend::INVERT, stencil_clip);
+        let pso_textured_blend_none_clip = textured_pipeline(
+            factory, no_blend, stencil_clip);
+        // Textured, inside.
+        let pso_textured_blend_alpha_inside = textured_pipeline(
+            factory, blend::ALPHA, stencil_inside);
+        let pso_textured_blend_add_inside = textured_pipeline(
+            factory, blend::ADD, stencil_inside);
+        let pso_textured_blend_multiply_inside = textured_pipeline(
+            factory, blend::MULTIPLY, stencil_inside);
+        let pso_textured_blend_invert_inside = textured_pipeline(
+            factory, blend::INVERT, stencil_inside);
+        let pso_textured_blend_none_inside = textured_pipeline(
+            factory, no_blend, stencil_inside);
+        // Textured, outside.
+        let pso_textured_blend_alpha_outside = textured_pipeline(
+            factory, blend::ALPHA, stencil_outside);
+        let pso_textured_blend_add_outside = textured_pipeline(
+            factory, blend::ADD, stencil_outside);
+        let pso_textured_blend_multiply_outside = textured_pipeline(
+            factory, blend::MULTIPLY, stencil_outside);
+        let pso_textured_blend_invert_outside = textured_pipeline(
+            factory, blend::INVERT, stencil_outside);
+        let pso_textured_blend_none_outside = textured_pipeline(
+            factory, no_blend, stencil_outside);
 
         let buffer_pos = factory.create_buffer_dynamic(
             POS_COMPONENTS * BUFFER_SIZE,
@@ -181,11 +254,30 @@ impl<R: gfx::Resources> Gfx2d<R> {
             pso_colored_blend_multiply: pso_colored_blend_multiply,
             pso_colored_blend_invert: pso_colored_blend_invert,
             pso_colored_blend_none: pso_colored_blend_none,
+            // Textured, no clipping.
             pso_textured_blend_alpha: pso_textured_blend_alpha,
             pso_textured_blend_add: pso_textured_blend_add,
             pso_textured_blend_multiply: pso_textured_blend_multiply,
             pso_textured_blend_invert: pso_textured_blend_invert,
             pso_textured_blend_none: pso_textured_blend_none,
+            // Textured, clip.
+            pso_textured_blend_alpha_clip: pso_textured_blend_alpha_clip,
+            pso_textured_blend_add_clip: pso_textured_blend_add_clip,
+            pso_textured_blend_multiply_clip: pso_textured_blend_multiply_clip,
+            pso_textured_blend_invert_clip: pso_textured_blend_invert_clip,
+            pso_textured_blend_none_clip: pso_textured_blend_none_clip,
+            // Textured, inside.
+            pso_textured_blend_alpha_inside: pso_textured_blend_alpha_inside,
+            pso_textured_blend_add_inside: pso_textured_blend_add_inside,
+            pso_textured_blend_multiply_inside: pso_textured_blend_multiply_inside,
+            pso_textured_blend_invert_inside: pso_textured_blend_invert_inside,
+            pso_textured_blend_none_inside: pso_textured_blend_none_inside,
+            // Textured, outside.
+            pso_textured_blend_alpha_outside: pso_textured_blend_alpha_outside,
+            pso_textured_blend_add_outside: pso_textured_blend_add_outside,
+            pso_textured_blend_multiply_outside: pso_textured_blend_multiply_outside,
+            pso_textured_blend_invert_outside: pso_textured_blend_invert_outside,
+            pso_textured_blend_none_outside: pso_textured_blend_none_outside,
             sampler: sampler
         }
     }
@@ -384,6 +476,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         let &mut GfxGraphics {
             ref mut encoder,
             output_color,
+            output_stencil,
             g2d: &mut Gfx2d {
                 ref mut buffer_pos,
                 ref mut buffer_uv,
@@ -433,6 +526,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 color: *color,
                 texture: (texture.view.clone(), sampler.clone()),
                 blend_target: output_color.clone(),
+                stencil_target: (output_stencil.clone(), (0, 0)),
                 blend_ref: [1.0; 4],
                 scissor: scissor,
             };
