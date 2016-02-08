@@ -95,33 +95,13 @@ impl<R: gfx::Resources> Gfx2d<R> {
         use gfx::traits::*;
         use shaders::{ colored, textured };
 
-        let create_stencil = |fun: Comparison,
-                              mask_read: u8,
-                              mask_write: u8,
-                              ops: (StencilOp, StencilOp, StencilOp)|
-        -> Stencil {
-            let side = StencilSide {
-                fun: fun,
-                mask_read: mask_read,
-                mask_write: mask_write,
-                op_fail: ops.0,
-                op_depth_fail: ops.1,
-                op_pass: ops.2,
-            };
-            Stencil {
-                front: side,
-                back: side,
-            }
-        };
-
         let stencil = Stencil::new(Comparison::Always, 0,
             (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
         let stencil_clip = Stencil::new(Comparison::Never, 255,
             (StencilOp::Replace, StencilOp::Keep, StencilOp::Keep));
-        // TODO: Difference in mask_read (255) and mask_write (0)?
-        let stencil_inside = create_stencil(Comparison::Equal, 255, 0,
+        let stencil_inside = Stencil::new(Comparison::Equal, 255,
             (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
-        let stencil_outside = create_stencil(Comparison::NotEqual, 255, 0,
+        let stencil_outside = Stencil::new(Comparison::NotEqual, 255,
             (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
 
         // Channel color masks.
