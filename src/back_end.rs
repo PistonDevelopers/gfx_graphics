@@ -30,16 +30,17 @@ gfx_pipeline_base!( pipe_colored {
     color: gfx::Global<[f32; 4]>,
     blend_target: gfx::BlendTarget<gfx::format::Rgba8>,
     blend_ref: gfx::BlendRef,
+    scissor: gfx::Scissor,
 });
 
-gfx_pipeline!( pipe_textured {
-    pos: gfx::VertexBuffer<PositionFormat> = (),
-    uv: gfx::VertexBuffer<TexCoordsFormat> = (),
-    color: gfx::Global<[f32; 4]> = "color",
-    texture: gfx::TextureSampler<[f32; 4]> = "s_texture",
-    blend_target: gfx::BlendTarget<gfx::format::Rgba8> =
-        ("o_Color", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
-    blend_ref: gfx::BlendRef = (),
+gfx_pipeline_base!( pipe_textured {
+    pos: gfx::VertexBuffer<PositionFormat>,
+    uv: gfx::VertexBuffer<TexCoordsFormat>,
+    color: gfx::Global<[f32; 4]>,
+    texture: gfx::TextureSampler<[f32; 4]>,
+    blend_target: gfx::BlendTarget<gfx::format::Rgba8>,
+    blend_ref: gfx::BlendRef,
+    scissor: gfx::Scissor,
 });
 
 /// The data used for drawing 2D graphics.
@@ -92,6 +93,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
                     blend_target: ("o_Color", gfx::state::MASK_ALL,
                         blend_preset),
                     blend_ref: (),
+                    scissor: (),
                 }
             ).unwrap()
         };
@@ -114,18 +116,37 @@ impl<R: gfx::Resources> Gfx2d<R> {
             },
         });
 
-        let pso_textured = factory.create_pipeline_simple(
-            Shaders::new()
-                .set(GLSL::V1_20, textured::VERTEX_GLSL_120)
-                .set(GLSL::V1_50, textured::VERTEX_GLSL_150_CORE)
-                .get(glsl).unwrap(),
-            Shaders::new()
-                .set(GLSL::V1_20, textured::FRAGMENT_GLSL_120)
-                .set(GLSL::V1_50, textured::FRAGMENT_GLSL_150_CORE)
-                .get(glsl).unwrap(),
-            gfx::state::CullFace::Nothing,
-            pipe_textured::new()
-        ).unwrap();
+        let textured_shader_set = factory.create_shader_set(
+                Shaders::new()
+                    .set(GLSL::V1_20, textured::VERTEX_GLSL_120)
+                    .set(GLSL::V1_50, textured::VERTEX_GLSL_150_CORE)
+                    .get(glsl).unwrap(),
+                Shaders::new()
+                    .set(GLSL::V1_20, textured::FRAGMENT_GLSL_120)
+                    .set(GLSL::V1_50, textured::FRAGMENT_GLSL_150_CORE)
+                    .get(glsl).unwrap()
+            ).unwrap();
+
+        let textured_pipeline = |factory: &mut F, blend_preset: Blend|
+        -> PipelineState<R, pipe_textured::Meta> {
+            factory.create_pipeline_state(
+                &textured_shader_set,
+                Primitive::TriangleList,
+                Rasterizer::new_fill(gfx::state::CullFace::Nothing),
+                pipe_textured::Init {
+                    pos: (),
+                    uv: (),
+                    color: "color",
+                    texture: "s_texture",
+                    blend_target: ("o_Color", gfx::state::MASK_ALL,
+                        blend_preset),
+                    blend_ref: (),
+                    scissor: (),
+                }
+            ).unwrap()
+        };
+
+        let pso_textured = textured_pipeline(factory, blend::ALPHA);
 
         let buffer_pos = factory.create_buffer_dynamic(
             POS_COMPONENTS * BUFFER_SIZE,
@@ -272,6 +293,8 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         where F: FnMut(&mut FnMut(&[f32]))
     {
         use graphics::draw_state::Blend;
+        use gfx::core::target::Rect;
+        use std::u16;
 
         let &mut GfxGraphics {
             ref mut encoder,
@@ -297,6 +320,12 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             None => pso_colored_blend_none
         };
 
+        let scissor = match draw_state.scissor {
+            None => Rect { x: 0, y: 0, w: u16::MAX, h: u16::MAX },
+            Some(r) => Rect { x: r[0] as u16, y: r[1] as u16,
+                w: r[2] as u16, h: r[3] as u16 }
+        };
+
         f(&mut |vertices: &[f32]| {
             use std::mem::transmute;
 
@@ -311,6 +340,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 blend_target: output_color.clone(),
                 // Use white color for blend reference to make invert work.
                 blend_ref: [1.0; 4],
+                scissor: scissor,
             };
 
             let n = vertices.len() / POS_COMPONENTS;
@@ -333,6 +363,9 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     )
         where F: FnMut(&mut FnMut(&[f32], &[f32]))
     {
+        use gfx::core::target::Rect;
+        use std::u16;
+
         let &mut GfxGraphics {
             ref mut encoder,
             output_color,
@@ -347,6 +380,11 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         } = self;
 
         // TODO: Update draw state.
+        let scissor = match draw_state.scissor {
+            None => Rect { x: 0, y: 0, w: u16::MAX, h: u16::MAX },
+            Some(r) => Rect { x: r[0] as u16, y: r[1] as u16,
+                w: r[2] as u16, h: r[3] as u16 }
+        };
 
         f(&mut |vertices: &[f32], texture_coords: &[f32]| {
             use std::mem::transmute;
@@ -369,6 +407,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 texture: (texture.view.clone(), sampler.clone()),
                 blend_target: output_color.clone(),
                 blend_ref: [1.0; 4],
+                scissor: scissor,
             };
 
             let n = vertices.len() / POS_COMPONENTS;
