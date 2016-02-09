@@ -1,5 +1,6 @@
 use graphics::{ Context, DrawState, Graphics, Viewport };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
+use graphics::draw_state;
 use { gfx, Texture };
 use gfx::format::{DepthStencil, Rgba8};
 use gfx::pso::PipelineState;
@@ -41,6 +42,7 @@ gfx_pipeline_base!( pipe_textured {
     scissor: gfx::Scissor,
 });
 
+// Stores one PSO per blend setting.
 struct PsoBlend<T> {
     alpha: T,
     add: T,
@@ -50,7 +52,7 @@ struct PsoBlend<T> {
 }
 
 impl<T> PsoBlend<T> {
-    fn blend(&mut self, blend: Option<::graphics::draw_state::Blend>) -> &mut T {
+    fn blend(&mut self, blend: Option<draw_state::Blend>) -> &mut T {
         use graphics::draw_state::Blend;
 
         match blend {
@@ -63,33 +65,26 @@ impl<T> PsoBlend<T> {
     }
 }
 
-/// The data used for drawing 2D graphics.
-pub struct Gfx2d<R: gfx::Resources> {
-    buffer_pos: gfx::handle::Buffer<R, PositionFormat>,
-    buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
-    colored: PsoBlend<PipelineState<R, pipe_colored::Meta>>,
-    colored_clip: PsoBlend<PipelineState<R, pipe_colored::Meta>>,
-    colored_inside: PsoBlend<PipelineState<R, pipe_colored::Meta>>,
-    colored_outside: PsoBlend<PipelineState<R, pipe_colored::Meta>>,
-    textured: PsoBlend<PipelineState<R, pipe_textured::Meta>>,
-    textured_clip: PsoBlend<PipelineState<R, pipe_textured::Meta>>,
-    textured_inside: PsoBlend<PipelineState<R, pipe_textured::Meta>>,
-    textured_outside: PsoBlend<PipelineState<R, pipe_textured::Meta>>,
-    sampler: gfx::handle::Sampler<R>,
+// Stores one `PsoBlend` per clip setting.
+struct PsoStencil<T> {
+    none: PsoBlend<T>,
+    clip: PsoBlend<T>,
+    inside: PsoBlend<T>,
+    outside: PsoBlend<T>,
 }
 
-impl<R: gfx::Resources> Gfx2d<R> {
-    /// Creates a new Gfx2d object.
-    pub fn new<F>(opengl: OpenGL, factory: &mut F) -> Self
-        where F: gfx::Factory<R>
+impl<T> PsoStencil<T> {
+    fn new<Fact, F>(factory: &mut Fact, f: F) -> PsoStencil<T>
+        where F: Fn(
+            &mut Fact,
+            gfx::state::Blend,
+            gfx::state::Stencil,
+            gfx::state::ColorMask
+        ) -> T
     {
-        use gfx::Primitive;
-        use gfx::state::Rasterizer;
         use gfx::state::{Blend, BlendChannel, Comparison, Equation, Factor,
             Stencil, StencilOp};
         use gfx::preset::blend;
-        use gfx::traits::*;
-        use shaders::{ colored, textured };
 
         let stencil = Stencil::new(Comparison::Always, 0,
             (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
@@ -103,6 +98,89 @@ impl<R: gfx::Resources> Gfx2d<R> {
         // Channel color masks.
         let mask_all = gfx::state::MASK_ALL;
         let mask_none = gfx::state::MASK_NONE;
+
+        // Fake disabled blending using the same pipeline.
+        let no_blend = Blend {
+            color: BlendChannel {
+                equation: Equation::Add,
+                source: Factor::One,
+                destination: Factor::Zero,
+            },
+            alpha: BlendChannel {
+                equation: Equation::Add,
+                source: Factor::One,
+                destination: Factor::Zero,
+            },
+        };
+
+        PsoStencil {
+            none: PsoBlend {
+                alpha: f(factory, blend::ALPHA, stencil, mask_all),
+                add: f(factory, blend::ADD, stencil, mask_all),
+                multiply: f(factory, blend::MULTIPLY, stencil, mask_all),
+                invert: f(factory, blend::INVERT, stencil, mask_all),
+                none: f(factory, no_blend, stencil, mask_all),
+            },
+            clip: PsoBlend {
+                alpha: f(factory, blend::ALPHA, stencil_clip, mask_none),
+                add: f(factory, blend::ADD, stencil_clip, mask_none),
+                multiply: f(factory, blend::MULTIPLY, stencil_clip, mask_none),
+                invert: f(factory, blend::INVERT, stencil_clip, mask_none),
+                none: f(factory, no_blend, stencil_clip, mask_none),
+            },
+            inside: PsoBlend {
+                alpha: f(factory, blend::ALPHA, stencil_inside, mask_all),
+                add: f(factory, blend::ADD, stencil_inside, mask_all),
+                multiply: f(factory, blend::MULTIPLY, stencil_inside, mask_all),
+                invert: f(factory, blend::INVERT, stencil_inside, mask_all),
+                none: f(factory, no_blend, stencil_inside, mask_all),
+            },
+            outside: PsoBlend {
+                alpha: f(factory, blend::ALPHA, stencil_outside, mask_all),
+                add: f(factory, blend::ADD, stencil_outside, mask_all),
+                multiply: f(factory, blend::MULTIPLY, stencil_outside, mask_all),
+                invert: f(factory, blend::INVERT, stencil_outside, mask_all),
+                none: f(factory, no_blend, stencil_outside, mask_all),
+            }
+        }
+    }
+
+    // Returns a PSO and stencil reference given a stencil and blend setting.
+    fn stencil_blend(
+        &mut self,
+        stencil: Option<draw_state::Stencil>,
+        blend: Option<draw_state::Blend>
+    ) -> (&mut T, u8) {
+        use graphics::draw_state::Stencil;
+
+        match stencil {
+            None => (self.none.blend(blend), 0),
+            Some(Stencil::Clip(val)) => (self.clip.blend(blend), val),
+            Some(Stencil::Inside(val)) => (self.inside.blend(blend), val),
+            Some(Stencil::Outside(val)) => (self.outside.blend(blend), val),
+        }
+    }
+}
+
+/// The data used for drawing 2D graphics.
+pub struct Gfx2d<R: gfx::Resources> {
+    buffer_pos: gfx::handle::Buffer<R, PositionFormat>,
+    buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
+    colored: PsoStencil<PipelineState<R, pipe_colored::Meta>>,
+    textured: PsoStencil<PipelineState<R, pipe_textured::Meta>>,
+    sampler: gfx::handle::Sampler<R>,
+}
+
+impl<R: gfx::Resources> Gfx2d<R> {
+    /// Creates a new Gfx2d object.
+    pub fn new<F>(opengl: OpenGL, factory: &mut F) -> Self
+        where F: gfx::Factory<R>
+    {
+        use gfx::Primitive;
+        use gfx::state::Rasterizer;
+        use gfx::state::{Blend, Stencil};
+        use gfx::traits::*;
+        use shaders::{ colored, textured };
 
         let glsl = opengl.to_glsl();
 
@@ -137,48 +215,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             ).unwrap()
         };
 
-        // Fake disabled blending using the same pipeline.
-        let no_blend = Blend {
-            color: BlendChannel {
-                equation: Equation::Add,
-                source: Factor::One,
-                destination: Factor::Zero,
-            },
-            alpha: BlendChannel {
-                equation: Equation::Add,
-                source: Factor::One,
-                destination: Factor::Zero,
-            },
-        };
-
-        let colored = PsoBlend {
-            alpha: colored_pipeline(factory, blend::ALPHA, stencil, mask_all),
-            add: colored_pipeline(factory, blend::ADD, stencil, mask_all),
-            multiply: colored_pipeline(factory, blend::MULTIPLY, stencil, mask_all),
-            invert: colored_pipeline(factory, blend::INVERT, stencil, mask_all),
-            none: colored_pipeline(factory, no_blend, stencil, mask_all),
-        };
-        let colored_clip = PsoBlend {
-            alpha: colored_pipeline(factory, blend::ALPHA, stencil_clip, mask_none),
-            add: colored_pipeline(factory, blend::ADD, stencil_clip, mask_none),
-            multiply: colored_pipeline(factory, blend::MULTIPLY, stencil_clip, mask_none),
-            invert: colored_pipeline(factory, blend::INVERT, stencil_clip, mask_none),
-            none: colored_pipeline(factory, no_blend, stencil_clip, mask_none),
-        };
-        let colored_inside = PsoBlend {
-            alpha: colored_pipeline(factory, blend::ALPHA, stencil_inside, mask_all),
-            add: colored_pipeline(factory, blend::ADD, stencil_inside, mask_all),
-            multiply: colored_pipeline(factory, blend::MULTIPLY, stencil_inside, mask_all),
-            invert: colored_pipeline(factory, blend::INVERT, stencil_inside, mask_all),
-            none: colored_pipeline(factory, no_blend, stencil_inside, mask_all),
-        };
-        let colored_outside = PsoBlend {
-            alpha: colored_pipeline(factory, blend::ALPHA, stencil_outside, mask_all),
-            add: colored_pipeline(factory, blend::ADD, stencil_outside, mask_all),
-            multiply: colored_pipeline(factory, blend::MULTIPLY, stencil_outside, mask_all),
-            invert: colored_pipeline(factory, blend::INVERT, stencil_outside, mask_all),
-            none: colored_pipeline(factory, no_blend, stencil_outside, mask_all),
-        };
+        let colored = PsoStencil::new(factory, colored_pipeline);
 
         let textured_shader_set = factory.create_shader_set(
                 Shaders::new()
@@ -213,34 +250,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             ).unwrap()
         };
 
-        let textured = PsoBlend {
-            alpha: textured_pipeline(factory, blend::ALPHA, stencil, mask_all),
-            add: textured_pipeline(factory, blend::ADD, stencil, mask_all),
-            multiply: textured_pipeline(factory, blend::MULTIPLY, stencil, mask_all),
-            invert: textured_pipeline(factory, blend::INVERT, stencil, mask_all),
-            none: textured_pipeline(factory, no_blend, stencil, mask_all),
-        };
-        let textured_clip = PsoBlend {
-            alpha: textured_pipeline(factory, blend::ALPHA, stencil_clip, mask_none),
-            add: textured_pipeline(factory, blend::ADD, stencil_clip, mask_none),
-            multiply: textured_pipeline(factory, blend::MULTIPLY, stencil_clip, mask_none),
-            invert: textured_pipeline(factory, blend::INVERT, stencil_clip, mask_none),
-            none: textured_pipeline(factory, no_blend, stencil_clip, mask_none),
-        };
-        let textured_inside = PsoBlend {
-            alpha: textured_pipeline(factory, blend::ALPHA, stencil_inside, mask_all),
-            add: textured_pipeline(factory, blend::ADD, stencil_inside, mask_all),
-            multiply: textured_pipeline(factory, blend::MULTIPLY, stencil_inside, mask_all),
-            invert: textured_pipeline(factory, blend::INVERT, stencil_inside, mask_all),
-            none: textured_pipeline(factory, no_blend, stencil_inside, mask_all),
-        };
-        let textured_outside = PsoBlend {
-            alpha: textured_pipeline(factory, blend::ALPHA, stencil_outside, mask_all),
-            add: textured_pipeline(factory, blend::ADD, stencil_outside, mask_all),
-            multiply: textured_pipeline(factory, blend::MULTIPLY, stencil_outside, mask_all),
-            invert: textured_pipeline(factory, blend::INVERT, stencil_outside, mask_all),
-            none: textured_pipeline(factory, no_blend, stencil_outside, mask_all),
-        };
+        let textured = PsoStencil::new(factory, textured_pipeline);
 
         let buffer_pos = factory.create_buffer_dynamic(
             POS_COMPONENTS * BUFFER_SIZE,
@@ -261,13 +271,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             buffer_pos: buffer_pos,
             buffer_uv: buffer_uv,
             colored: colored,
-            colored_clip: colored_clip,
-            colored_inside: colored_inside,
-            colored_outside: colored_outside,
             textured: textured,
-            textured_clip: textured_clip,
-            textured_inside: textured_inside,
-            textured_outside: textured_outside,
             sampler: sampler
         }
     }
@@ -388,7 +392,6 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     )
         where F: FnMut(&mut FnMut(&[f32]))
     {
-        use graphics::draw_state::Stencil;
         use gfx::core::target::Rect;
         use std::u16;
 
@@ -399,21 +402,15 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             g2d: &mut Gfx2d {
                 ref mut buffer_pos,
                 ref mut colored,
-                ref mut colored_clip,
-                ref mut colored_inside,
-                ref mut colored_outside,
                 ..
             },
             ..
         } = self;
 
-        let blend = draw_state.blend;
-        let (pso_colored, stencil_val) = match draw_state.stencil {
-            None => (colored.blend(blend), 0),
-            Some(Stencil::Clip(val)) => (colored_clip.blend(blend), val),
-            Some(Stencil::Inside(val)) => (colored_inside.blend(blend), val),
-            Some(Stencil::Outside(val)) => (colored_outside.blend(blend), val),
-        };
+        let (pso_colored, stencil_val) = colored.stencil_blend(
+            draw_state.stencil,
+            draw_state.blend
+        );
 
         let scissor = match draw_state.scissor {
             None => Rect { x: 0, y: 0, w: u16::MAX, h: u16::MAX },
@@ -460,7 +457,6 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     )
         where F: FnMut(&mut FnMut(&[f32], &[f32]))
     {
-        use graphics::draw_state::Stencil;
         use gfx::core::target::Rect;
         use std::u16;
 
@@ -472,22 +468,16 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 ref mut buffer_pos,
                 ref mut buffer_uv,
                 ref mut textured,
-                ref mut textured_clip,
-                ref mut textured_inside,
-                ref mut textured_outside,
                 ref sampler,
                 ..
             },
             ..
         } = self;
 
-        let blend = draw_state.blend;
-        let (pso_textured, stencil_val) = match draw_state.stencil {
-            None => (textured.blend(blend), 0),
-            Some(Stencil::Clip(val)) => (textured_clip.blend(blend), val),
-            Some(Stencil::Inside(val)) => (textured_inside.blend(blend), val),
-            Some(Stencil::Outside(val)) => (textured_outside.blend(blend), val),
-        };
+        let (pso_textured, stencil_val) = textured.stencil_blend(
+            draw_state.stencil,
+            draw_state.blend
+        );
 
         let scissor = match draw_state.scissor {
             None => Rect { x: 0, y: 0, w: u16::MAX, h: u16::MAX },
