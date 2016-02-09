@@ -9,10 +9,6 @@ use shader_version::glsl::GLSL;
 const POS_COMPONENTS: usize = 2;
 const UV_COMPONENTS: usize = 2;
 
-// Boiler plate for automatic attribute construction.
-// Needs to be improved on gfx-rs side.
-// For some reason, using ``*_COMPONENT` triggers some macros errors.
-
 gfx_vertex_struct!( PositionFormat {
     pos: [f32; 2] = "pos",
 });
