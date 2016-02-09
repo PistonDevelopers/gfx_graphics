@@ -7,6 +7,7 @@ extern crate gfx;
 extern crate gfx_texture;
 extern crate graphics;
 extern crate shaders_graphics2d as shaders;
+extern crate shader_version;
 
 pub use gfx_texture::*;
 
