@@ -2,7 +2,7 @@ use graphics::{ Context, DrawState, Graphics, Viewport };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use graphics::draw_state;
 use { gfx, Texture };
-use gfx::format::{DepthStencil, Rgba8};
+use gfx::format::{DepthStencil, Srgb8};
 use gfx::pso::PipelineState;
 use shader_version::{ OpenGL, Shaders };
 use shader_version::glsl::GLSL;
@@ -25,7 +25,7 @@ gfx_vertex_struct!( TexCoordsFormat {
 gfx_pipeline_base!( pipe_colored {
     pos: gfx::VertexBuffer<PositionFormat>,
     color: gfx::Global<[f32; 4]>,
-    blend_target: gfx::BlendTarget<gfx::format::Rgba8>,
+    blend_target: gfx::BlendTarget<gfx::format::Srgb8>,
     stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
     blend_ref: gfx::BlendRef,
     scissor: gfx::Scissor,
@@ -36,7 +36,7 @@ gfx_pipeline_base!( pipe_textured {
     uv: gfx::VertexBuffer<TexCoordsFormat>,
     color: gfx::Global<[f32; 4]>,
     texture: gfx::TextureSampler<[f32; 4]>,
-    blend_target: gfx::BlendTarget<gfx::format::Rgba8>,
+    blend_target: gfx::BlendTarget<gfx::format::Srgb8>,
     stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
     blend_ref: gfx::BlendRef,
     scissor: gfx::Scissor,
@@ -280,7 +280,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
     pub fn draw<C, F>(
         &mut self,
         encoder: &mut gfx::Encoder<R, C>,
-        output_color: &gfx::handle::RenderTargetView<R, Rgba8>,
+        output_color: &gfx::handle::RenderTargetView<R, Srgb8>,
         output_stencil: &gfx::handle::DepthStencilView<R, DepthStencil>,
         viewport: Viewport,
         f: F
@@ -310,7 +310,7 @@ pub struct GfxGraphics<'a, R, C>
           R::Sampler: 'a
 {
     encoder: &'a mut gfx::Encoder<R, C>,
-    output_color: &'a gfx::handle::RenderTargetView<R, Rgba8>,
+    output_color: &'a gfx::handle::RenderTargetView<R, Srgb8>,
     output_stencil: &'a gfx::handle::DepthStencilView<R, DepthStencil>,
     g2d: &'a mut Gfx2d<R>,
 }
@@ -321,7 +321,7 @@ impl<'a, R, C> GfxGraphics<'a, R, C>
 {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(encoder: &'a mut gfx::Encoder<R, C>,
-               output_color: &'a gfx::handle::RenderTargetView<R, Rgba8>,
+               output_color: &'a gfx::handle::RenderTargetView<R, Srgb8>,
                output_stencil: &'a gfx::handle::DepthStencilView<R, DepthStencil>,
                g2d: &'a mut Gfx2d<R>) -> Self {
         GfxGraphics {
@@ -372,7 +372,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             output_color,
             ..
         } = self;
-        encoder.clear(output_color, color);
+        encoder.clear(output_color, [color[0], color[1], color[2]]);
     }
 
     fn clear_stencil(&mut self, value: u8) {
