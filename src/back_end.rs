@@ -1,6 +1,7 @@
 use graphics::{ Context, DrawState, Graphics, Viewport };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use graphics::draw_state;
+use graphics::color::gamma_srgb_to_linear;
 use { gfx, Texture };
 use gfx::format::{DepthStencil, Srgb8};
 use gfx::pso::PipelineState;
@@ -163,6 +164,8 @@ impl<T> PsoStencil<T> {
 }
 
 /// The data used for drawing 2D graphics.
+///
+/// Stores buffers and PSO objects needed for rendering 2D graphics.
 pub struct Gfx2d<R: gfx::Resources> {
     buffer_pos: gfx::handle::Buffer<R, PositionFormat>,
     buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
@@ -367,6 +370,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     type Texture = Texture<R>;
 
     fn clear_color(&mut self, color: [f32; 4]) {
+        let color = gamma_srgb_to_linear(color);
         let &mut GfxGraphics {
             ref mut encoder,
             output_color,
@@ -395,6 +399,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         use gfx::core::target::Rect;
         use std::u16;
 
+        let color = gamma_srgb_to_linear(*color);
         let &mut GfxGraphics {
             ref mut encoder,
             output_color,
@@ -428,7 +433,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
 
             let data = pipe_colored::Data {
                 pos: buffer_pos.clone(),
-                color: *color,
+                color: color,
                 blend_target: output_color.clone(),
                 stencil_target: (output_stencil.clone(),
                                  (stencil_val, stencil_val)),
@@ -460,6 +465,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         use gfx::core::target::Rect;
         use std::u16;
 
+        let color = gamma_srgb_to_linear(*color);
         let &mut GfxGraphics {
             ref mut encoder,
             output_color,
@@ -502,7 +508,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             let data = pipe_textured::Data {
                 pos: buffer_pos.clone(),
                 uv: buffer_uv.clone(),
-                color: *color,
+                color: color,
                 texture: (texture.view.clone(), sampler.clone()),
                 blend_target: output_color.clone(),
                 stencil_target: (output_stencil.clone(),
