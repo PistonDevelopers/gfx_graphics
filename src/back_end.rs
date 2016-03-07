@@ -187,7 +187,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let glsl = opengl.to_glsl();
 
-        let colored_shader_set = factory.create_shader_set(
+        let colored_program = factory.link_program(
                 Shaders::new()
                     .set(GLSL::V1_20, colored::VERTEX_GLSL_120)
                     .set(GLSL::V1_50, colored::VERTEX_GLSL_150_CORE)
@@ -203,8 +203,8 @@ impl<R: gfx::Resources> Gfx2d<R> {
                                 stencil: Stencil,
                                 color_mask: gfx::state::ColorMask|
         -> PipelineState<R, pipe_colored::Meta> {
-            factory.create_pipeline_state(
-                &colored_shader_set,
+            factory.create_pipeline_from_program(
+                &colored_program,
                 Primitive::TriangleList,
                 Rasterizer::new_fill(gfx::state::CullFace::Nothing),
                 pipe_colored::Init {
@@ -220,7 +220,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let colored = PsoStencil::new(factory, colored_pipeline);
 
-        let textured_shader_set = factory.create_shader_set(
+        let textured_program = factory.link_program(
                 Shaders::new()
                     .set(GLSL::V1_20, textured::VERTEX_GLSL_120)
                     .set(GLSL::V1_50, textured::VERTEX_GLSL_150_CORE)
@@ -236,8 +236,8 @@ impl<R: gfx::Resources> Gfx2d<R> {
                                  stencil: Stencil,
                                  color_mask: gfx::state::ColorMask|
         -> PipelineState<R, pipe_textured::Meta> {
-            factory.create_pipeline_state(
-                &textured_shader_set,
+            factory.create_pipeline_from_program(
+                &textured_program,
                 Primitive::TriangleList,
                 Rasterizer::new_fill(gfx::state::CullFace::Nothing),
                 pipe_textured::Init {
