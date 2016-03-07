@@ -423,6 +423,17 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 w: r[2] as u16, h: r[3] as u16 }
         };
 
+        let data = pipe_colored::Data {
+            pos: buffer_pos.clone(),
+            color: color,
+            blend_target: output_color.clone(),
+            stencil_target: (output_stencil.clone(),
+                             (stencil_val, stencil_val)),
+            // Use white color for blend reference to make invert work.
+            blend_ref: [1.0; 4],
+            scissor: scissor,
+        };
+
         f(&mut |vertices: &[f32]| {
             use std::mem::transmute;
 
@@ -430,17 +441,6 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 encoder.update_buffer(&buffer_pos, transmute(vertices), 0)
                     .unwrap();
             }
-
-            let data = pipe_colored::Data {
-                pos: buffer_pos.clone(),
-                color: color,
-                blend_target: output_color.clone(),
-                stencil_target: (output_stencil.clone(),
-                                 (stencil_val, stencil_val)),
-                // Use white color for blend reference to make invert work.
-                blend_ref: [1.0; 4],
-                scissor: scissor,
-            };
 
             let n = vertices.len() / POS_COMPONENTS;
             let slice = gfx::Slice {
@@ -491,6 +491,18 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 w: r[2] as u16, h: r[3] as u16 }
         };
 
+        let data = pipe_textured::Data {
+            pos: buffer_pos.clone(),
+            uv: buffer_uv.clone(),
+            color: color,
+            texture: (texture.view.clone(), sampler.clone()),
+            blend_target: output_color.clone(),
+            stencil_target: (output_stencil.clone(),
+                             (stencil_val, stencil_val)),
+            blend_ref: [1.0; 4],
+            scissor: scissor,
+        };
+
         f(&mut |vertices: &[f32], texture_coords: &[f32]| {
             use std::mem::transmute;
 
@@ -504,18 +516,6 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 encoder.update_buffer(&buffer_uv, transmute(texture_coords), 0)
                     .unwrap();
             }
-
-            let data = pipe_textured::Data {
-                pos: buffer_pos.clone(),
-                uv: buffer_uv.clone(),
-                color: color,
-                texture: (texture.view.clone(), sampler.clone()),
-                blend_target: output_color.clone(),
-                stencil_target: (output_stencil.clone(),
-                                 (stencil_val, stencil_val)),
-                blend_ref: [1.0; 4],
-                scissor: scissor,
-            };
 
             let n = vertices.len() / POS_COMPONENTS;
             let slice = gfx::Slice {
