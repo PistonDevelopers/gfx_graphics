@@ -9,6 +9,7 @@ use shader_version::{ OpenGL, Shaders };
 use shader_version::glsl::GLSL;
 
 const POS_COMPONENTS: usize = 2;
+const COLOR_COMPONENTS: usize = 4;
 const UV_COMPONENTS: usize = 2;
 
 gfx_vertex_struct!( PositionFormat {
@@ -25,7 +26,7 @@ gfx_vertex_struct!( TexCoordsFormat {
 
 gfx_pipeline_base!( pipe_colored {
     pos: gfx::VertexBuffer<PositionFormat>,
-    color: gfx::Global<[f32; 4]>,
+    color: gfx::VertexBuffer<ColorFormat>,
     blend_target: gfx::BlendTarget<gfx::format::Srgb8>,
     stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
     blend_ref: gfx::BlendRef,
@@ -168,6 +169,7 @@ impl<T> PsoStencil<T> {
 /// Stores buffers and PSO objects needed for rendering 2D graphics.
 pub struct Gfx2d<R: gfx::Resources> {
     buffer_pos: gfx::handle::Buffer<R, PositionFormat>,
+    buffer_color: gfx::handle::Buffer<R, ColorFormat>,
     buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
     colored: PsoStencil<PipelineState<R, pipe_colored::Meta>>,
     textured: PsoStencil<PipelineState<R, pipe_textured::Meta>>,
@@ -209,7 +211,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
                 Rasterizer::new_fill(gfx::state::CullFace::Nothing),
                 pipe_colored::Init {
                     pos: (),
-                    color: "color",
+                    color: (),
                     blend_target: ("o_Color", color_mask, blend_preset),
                     stencil_target: stencil,
                     blend_ref: (),
@@ -259,6 +261,10 @@ impl<R: gfx::Resources> Gfx2d<R> {
             POS_COMPONENTS * BUFFER_SIZE,
             gfx::BufferRole::Vertex
         );
+        let buffer_color = factory.create_buffer_dynamic(
+            COLOR_COMPONENTS * BUFFER_SIZE,
+            gfx::BufferRole::Vertex
+        );
         let buffer_uv = factory.create_buffer_dynamic(
             UV_COMPONENTS * BUFFER_SIZE,
             gfx::BufferRole::Vertex
@@ -272,6 +278,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         Gfx2d {
             buffer_pos: buffer_pos,
+            buffer_color: buffer_color,
             buffer_uv: buffer_uv,
             colored: colored,
             textured: textured,
@@ -406,6 +413,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             output_stencil,
             g2d: &mut Gfx2d {
                 ref mut buffer_pos,
+                ref mut buffer_color,
                 ref mut colored,
                 ..
             },
@@ -425,7 +433,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
 
         let data = pipe_colored::Data {
             pos: buffer_pos.clone(),
-            color: color,
+            color: buffer_color.clone(),
             blend_target: output_color.clone(),
             stencil_target: (output_stencil.clone(),
                              (stencil_val, stencil_val)),
@@ -443,6 +451,13 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             }
 
             let n = vertices.len() / POS_COMPONENTS;
+
+            for i in 0..n {
+                encoder.update_buffer(&buffer_color, &[ColorFormat {
+                        color: color
+                    }], i).unwrap();
+            }
+
             let slice = gfx::Slice {
                     instances: None,
                     start: 0,

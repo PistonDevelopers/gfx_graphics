@@ -19,7 +19,7 @@ name = "gfx_graphics"
 [dependencies]
 freetype-rs = "0.5.0"
 gfx = "0.9.1"
-piston-shaders_graphics2d = "0.1.0"
+piston-shaders_graphics2d = "0.2.0"
 piston-gfx_texture = "0.10.0"
 piston2d-graphics = "0.15.0"
 shader_version = "0.2.1"
