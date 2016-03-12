@@ -482,7 +482,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             }
 
             {
-                use std::mem::transmute;
+                use std::slice::from_raw_parts;
 
                 let &mut GfxGraphics {
                     ref mut encoder,
@@ -496,8 +496,14 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 } = self;
 
                 unsafe {
-                    encoder.update_buffer(&buffer_pos, transmute(vertices),
-                                          *colored_offset).unwrap();
+                    encoder.update_buffer(
+                        &buffer_pos,
+                        from_raw_parts(
+                            vertices.as_ptr() as *const PositionFormat,
+                            n
+                        ),
+                        *colored_offset
+                    ).unwrap();
                 }
 
                 for i in 0..n {
@@ -564,20 +570,32 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         };
 
         f(&mut |vertices: &[f32], texture_coords: &[f32]| {
-            use std::mem::transmute;
+            use std::slice::from_raw_parts;
 
             assert_eq!(
                 vertices.len() * UV_COMPONENTS,
                 texture_coords.len() * POS_COMPONENTS
             );
+            let n = vertices.len() / POS_COMPONENTS;
             unsafe {
-                encoder.update_buffer(&buffer_pos, transmute(vertices), 0)
-                    .unwrap();
-                encoder.update_buffer(&buffer_uv, transmute(texture_coords), 0)
-                    .unwrap();
+                encoder.update_buffer(
+                    &buffer_pos,
+                    from_raw_parts(
+                        vertices.as_ptr() as *const PositionFormat,
+                        n
+                    ),
+                    0
+                ).unwrap();
+                encoder.update_buffer(
+                    &buffer_uv,
+                    from_raw_parts(
+                        texture_coords.as_ptr() as *const TexCoordsFormat,
+                        n
+                    ),
+                    0
+                ).unwrap();
             }
 
-            let n = vertices.len() / POS_COMPONENTS;
             let slice = gfx::Slice {
                 instances: None,
                 start: 0,
