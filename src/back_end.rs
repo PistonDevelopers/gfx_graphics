@@ -10,6 +10,10 @@ use shader_version::glsl::GLSL;
 
 const POS_COMPONENTS: usize = 2;
 const UV_COMPONENTS: usize = 2;
+// The number of chunks to fill up before rendering.
+// Amount of memory used: `BUFFER_SIZE * CHUNKS * 4 * (2 + 4)`
+// `4` for bytes per f32, and `2 + 4` for position and color.
+const CHUNKS: usize = 100;
 
 gfx_vertex_struct!( PositionFormat {
     pos: [f32; 2] = "pos",
@@ -25,7 +29,7 @@ gfx_vertex_struct!( TexCoordsFormat {
 
 gfx_pipeline_base!( pipe_colored {
     pos: gfx::VertexBuffer<PositionFormat>,
-    color: gfx::Global<[f32; 4]>,
+    color: gfx::VertexBuffer<ColorFormat>,
     blend_target: gfx::BlendTarget<gfx::format::Srgb8>,
     stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
     blend_ref: gfx::BlendRef,
@@ -167,7 +171,12 @@ impl<T> PsoStencil<T> {
 ///
 /// Stores buffers and PSO objects needed for rendering 2D graphics.
 pub struct Gfx2d<R: gfx::Resources> {
+    // The offset in vertices for colored rendering.
+    colored_offset: usize,
+    // The current draw state for colored rendering.
+    colored_draw_state: DrawState,
     buffer_pos: gfx::handle::Buffer<R, PositionFormat>,
+    buffer_color: gfx::handle::Buffer<R, ColorFormat>,
     buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
     colored: PsoStencil<PipelineState<R, pipe_colored::Meta>>,
     textured: PsoStencil<PipelineState<R, pipe_textured::Meta>>,
@@ -209,7 +218,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
                 Rasterizer::new_fill(gfx::state::CullFace::Nothing),
                 pipe_colored::Init {
                     pos: (),
-                    color: "color",
+                    color: (),
                     blend_target: ("o_Color", color_mask, blend_preset),
                     stencil_target: stencil,
                     blend_ref: (),
@@ -256,11 +265,15 @@ impl<R: gfx::Resources> Gfx2d<R> {
         let textured = PsoStencil::new(factory, textured_pipeline);
 
         let buffer_pos = factory.create_buffer_dynamic(
-            POS_COMPONENTS * BUFFER_SIZE,
+            BUFFER_SIZE * CHUNKS,
+            gfx::BufferRole::Vertex
+        );
+        let buffer_color = factory.create_buffer_dynamic(
+            BUFFER_SIZE * CHUNKS,
             gfx::BufferRole::Vertex
         );
         let buffer_uv = factory.create_buffer_dynamic(
-            UV_COMPONENTS * BUFFER_SIZE,
+            BUFFER_SIZE,
             gfx::BufferRole::Vertex
         );
 
@@ -271,7 +284,10 @@ impl<R: gfx::Resources> Gfx2d<R> {
         let sampler = factory.create_sampler(sampler_info);
 
         Gfx2d {
+            colored_offset: 0,
+            colored_draw_state: Default::default(),
             buffer_pos: buffer_pos,
+            buffer_color: buffer_color,
             buffer_uv: buffer_uv,
             colored: colored,
             textured: textured,
@@ -299,6 +315,9 @@ impl<R: gfx::Resources> Gfx2d<R> {
         );
         let c = Context::new_viewport(viewport);
         f(c, g);
+        if g.g2d.colored_offset > 0 {
+            g.flush_colored();
+        }
     }
 }
 
@@ -356,6 +375,57 @@ impl<'a, R, C> GfxGraphics<'a, R, C>
             | D16 | D24 | D24_S8 | D32 => false,
         }
     }
+
+    fn flush_colored(&mut self) {
+        use gfx::core::target::Rect;
+        use std::u16;
+
+        let &mut GfxGraphics {
+            ref mut encoder,
+            output_color,
+            output_stencil,
+            g2d: &mut Gfx2d {
+                ref mut colored_offset,
+                ref mut colored_draw_state,
+                ref mut buffer_pos,
+                ref mut buffer_color,
+                ref mut colored,
+                ..
+            },
+            ..
+        } = self;
+
+        let (pso_colored, stencil_val) = colored.stencil_blend(
+            colored_draw_state.stencil,
+            colored_draw_state.blend
+        );
+
+        let scissor = match colored_draw_state.scissor {
+            None => Rect { x: 0, y: 0, w: u16::MAX, h: u16::MAX },
+            Some(r) => Rect { x: r[0] as u16, y: r[1] as u16,
+                w: r[2] as u16, h: r[3] as u16 }
+        };
+
+        let data = pipe_colored::Data {
+            pos: buffer_pos.clone(),
+            color: buffer_color.clone(),
+            blend_target: output_color.clone(),
+            stencil_target: (output_stencil.clone(),
+                             (stencil_val, stencil_val)),
+            // Use white color for blend reference to make invert work.
+            blend_ref: [1.0; 4],
+            scissor: scissor,
+        };
+
+        let slice = gfx::Slice {
+            instances: None,
+            start: 0,
+            end: *colored_offset as u32,
+            kind: gfx::SliceKind::Vertex
+        };
+        encoder.draw(&slice, pso_colored, &data);
+        *colored_offset = 0;
+    }
 }
 
 impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
@@ -396,60 +466,53 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     )
         where F: FnMut(&mut FnMut(&[f32]))
     {
-        use gfx::core::target::Rect;
-        use std::u16;
-
         let color = gamma_srgb_to_linear(*color);
-        let &mut GfxGraphics {
-            ref mut encoder,
-            output_color,
-            output_stencil,
-            g2d: &mut Gfx2d {
-                ref mut buffer_pos,
-                ref mut colored,
-                ..
-            },
-            ..
-        } = self;
 
-        let (pso_colored, stencil_val) = colored.stencil_blend(
-            draw_state.stencil,
-            draw_state.blend
-        );
-
-        let scissor = match draw_state.scissor {
-            None => Rect { x: 0, y: 0, w: u16::MAX, h: u16::MAX },
-            Some(r) => Rect { x: r[0] as u16, y: r[1] as u16,
-                w: r[2] as u16, h: r[3] as u16 }
-        };
-
-        let data = pipe_colored::Data {
-            pos: buffer_pos.clone(),
-            color: color,
-            blend_target: output_color.clone(),
-            stencil_target: (output_stencil.clone(),
-                             (stencil_val, stencil_val)),
-            // Use white color for blend reference to make invert work.
-            blend_ref: [1.0; 4],
-            scissor: scissor,
-        };
-
+        // Flush when draw state changes.
+        if &self.g2d.colored_draw_state != draw_state {
+            self.flush_colored();
+            self.g2d.colored_draw_state = *draw_state;
+        }
         f(&mut |vertices: &[f32]| {
-            use std::mem::transmute;
+            let n = vertices.len() / POS_COMPONENTS;
 
-            unsafe {
-                encoder.update_buffer(&buffer_pos, transmute(vertices), 0)
-                    .unwrap();
+            // Render if there is not enough room.
+            if self.g2d.colored_offset + n > BUFFER_SIZE * CHUNKS {
+                self.flush_colored();
             }
 
-            let n = vertices.len() / POS_COMPONENTS;
-            let slice = gfx::Slice {
-                    instances: None,
-                    start: 0,
-                    end: n as u32,
-                    kind: gfx::SliceKind::Vertex
-            };
-            encoder.draw(&slice, pso_colored, &data);
+            {
+                use std::slice::from_raw_parts;
+
+                let &mut GfxGraphics {
+                    ref mut encoder,
+                    g2d: &mut Gfx2d {
+                        ref mut colored_offset,
+                        ref mut buffer_pos,
+                        ref mut buffer_color,
+                        ..
+                    },
+                    ..
+                } = self;
+
+                unsafe {
+                    encoder.update_buffer(
+                        &buffer_pos,
+                        from_raw_parts(
+                            vertices.as_ptr() as *const PositionFormat,
+                            n
+                        ),
+                        *colored_offset
+                    ).unwrap();
+                }
+
+                for i in 0..n {
+                    encoder.update_buffer(&buffer_color, &[ColorFormat {
+                            color: color
+                        }], *colored_offset + i).unwrap();
+                }
+                *colored_offset += n;
+            }
         })
     }
 
@@ -466,6 +529,9 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         use std::u16;
 
         let color = gamma_srgb_to_linear(*color);
+        if self.g2d.colored_offset > 0 {
+            self.flush_colored();
+        }
         let &mut GfxGraphics {
             ref mut encoder,
             output_color,
@@ -504,25 +570,37 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         };
 
         f(&mut |vertices: &[f32], texture_coords: &[f32]| {
-            use std::mem::transmute;
+            use std::slice::from_raw_parts;
 
             assert_eq!(
                 vertices.len() * UV_COMPONENTS,
                 texture_coords.len() * POS_COMPONENTS
             );
+            let n = vertices.len() / POS_COMPONENTS;
             unsafe {
-                encoder.update_buffer(&buffer_pos, transmute(vertices), 0)
-                    .unwrap();
-                encoder.update_buffer(&buffer_uv, transmute(texture_coords), 0)
-                    .unwrap();
+                encoder.update_buffer(
+                    &buffer_pos,
+                    from_raw_parts(
+                        vertices.as_ptr() as *const PositionFormat,
+                        n
+                    ),
+                    0
+                ).unwrap();
+                encoder.update_buffer(
+                    &buffer_uv,
+                    from_raw_parts(
+                        texture_coords.as_ptr() as *const TexCoordsFormat,
+                        n
+                    ),
+                    0
+                ).unwrap();
             }
 
-            let n = vertices.len() / POS_COMPONENTS;
             let slice = gfx::Slice {
-                    instances: None,
-                    start: 0,
-                    end: n as u32,
-                    kind: gfx::SliceKind::Vertex
+                instances: None,
+                start: 0,
+                end: n as u32,
+                kind: gfx::SliceKind::Vertex
             };
             encoder.draw(&slice, pso_textured, &data);
         })
