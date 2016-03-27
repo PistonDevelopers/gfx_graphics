@@ -3,7 +3,7 @@ use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use graphics::draw_state;
 use graphics::color::gamma_srgb_to_linear;
 use { gfx, Texture };
-use gfx::format::{DepthStencil, Srgb8};
+use gfx::format::{DepthStencil, Srgba8};
 use gfx::pso::PipelineState;
 use shader_version::{ OpenGL, Shaders };
 use shader_version::glsl::GLSL;
@@ -30,7 +30,7 @@ gfx_vertex_struct!( TexCoordsFormat {
 gfx_pipeline_base!( pipe_colored {
     pos: gfx::VertexBuffer<PositionFormat>,
     color: gfx::VertexBuffer<ColorFormat>,
-    blend_target: gfx::BlendTarget<gfx::format::Srgb8>,
+    blend_target: gfx::BlendTarget<gfx::format::Srgba8>,
     stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
     blend_ref: gfx::BlendRef,
     scissor: gfx::Scissor,
@@ -41,7 +41,7 @@ gfx_pipeline_base!( pipe_textured {
     uv: gfx::VertexBuffer<TexCoordsFormat>,
     color: gfx::Global<[f32; 4]>,
     texture: gfx::TextureSampler<[f32; 4]>,
-    blend_target: gfx::BlendTarget<gfx::format::Srgb8>,
+    blend_target: gfx::BlendTarget<gfx::format::Srgba8>,
     stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
     blend_ref: gfx::BlendRef,
     scissor: gfx::Scissor,
@@ -266,16 +266,19 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let buffer_pos = factory.create_buffer_dynamic(
             BUFFER_SIZE * CHUNKS,
-            gfx::BufferRole::Vertex
-        );
+            gfx::BufferRole::Vertex,
+            gfx::Bind::empty()
+        ).expect("Could not create `buffer_pos`");
         let buffer_color = factory.create_buffer_dynamic(
             BUFFER_SIZE * CHUNKS,
-            gfx::BufferRole::Vertex
-        );
+            gfx::BufferRole::Vertex,
+            gfx::Bind::empty()
+        ).expect("Could not create `buffer_color`");
         let buffer_uv = factory.create_buffer_dynamic(
             BUFFER_SIZE,
-            gfx::BufferRole::Vertex
-        );
+            gfx::BufferRole::Vertex,
+            gfx::Bind::empty()
+        ).expect("Could not create `buffer_uv`");
 
         let sampler_info = gfx::tex::SamplerInfo::new(
             gfx::tex::FilterMethod::Bilinear,
@@ -299,7 +302,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
     pub fn draw<C, F>(
         &mut self,
         encoder: &mut gfx::Encoder<R, C>,
-        output_color: &gfx::handle::RenderTargetView<R, Srgb8>,
+        output_color: &gfx::handle::RenderTargetView<R, Srgba8>,
         output_stencil: &gfx::handle::DepthStencilView<R, DepthStencil>,
         viewport: Viewport,
         f: F
@@ -332,7 +335,7 @@ pub struct GfxGraphics<'a, R, C>
           R::Sampler: 'a
 {
     encoder: &'a mut gfx::Encoder<R, C>,
-    output_color: &'a gfx::handle::RenderTargetView<R, Srgb8>,
+    output_color: &'a gfx::handle::RenderTargetView<R, Srgba8>,
     output_stencil: &'a gfx::handle::DepthStencilView<R, DepthStencil>,
     g2d: &'a mut Gfx2d<R>,
 }
@@ -343,7 +346,7 @@ impl<'a, R, C> GfxGraphics<'a, R, C>
 {
     /// Creates a new object for rendering 2D graphics.
     pub fn new(encoder: &'a mut gfx::Encoder<R, C>,
-               output_color: &'a gfx::handle::RenderTargetView<R, Srgb8>,
+               output_color: &'a gfx::handle::RenderTargetView<R, Srgba8>,
                output_stencil: &'a gfx::handle::DepthStencilView<R, DepthStencil>,
                g2d: &'a mut Gfx2d<R>) -> Self {
         GfxGraphics {
@@ -355,25 +358,10 @@ impl<'a, R, C> GfxGraphics<'a, R, C>
     }
 
     /// Returns true if texture has alpha channel.
-    pub fn has_texture_alpha(&self, texture: &Texture<R>) -> bool {
-        use gfx::format::SurfaceType::*;
-
-        match texture.surface.get_info().format {
-            R4_G4_B4_A4
-            | R5_G5_B5_A1
-            | R8_G8_B8_A8
-            | R10_G10_B10_A2
-            | R16_G16_B16_A16
-            | R32_G32_B32_A32 => true,
-            R3_G3_B2
-            | R4_G4
-            | R5_G6_B5
-            | R8 | R8_G8 | R8_G8_B8
-            | R11_G11_B10
-            | R16 | R16_G16 | R16_G16_B16
-            | R32 | R32_G32 | R32_G32_B32
-            | D16 | D24 | D24_S8 | D32 => false,
-        }
+    pub fn has_texture_alpha(&self, texture: &Texture<R>) -> bool
+        where R: gfx::Resources
+    {
+        texture.surface.get_info().format.get_alpha_stencil_bits() > 0
     }
 
     fn flush_colored(&mut self) {
@@ -446,7 +434,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             output_color,
             ..
         } = self;
-        encoder.clear(output_color, [color[0], color[1], color[2]]);
+        encoder.clear(output_color, color);
     }
 
     fn clear_stencil(&mut self, value: u8) {
