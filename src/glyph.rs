@@ -1,22 +1,22 @@
 //! Glyph caching
 
-extern crate freetype as ft;
+extern crate rusttype as rt;
 
-use std::path::Path;
+use std::io;
+use std::path::{Path};
 use std::collections::hash_map::{ HashMap, Entry };
 use graphics::character::{ CharacterCache, Character };
 use graphics::types::{FontSize, Scalar};
-use self::ft::render_mode::RenderMode;
 use { gfx, Texture, TextureSettings };
 use gfx::core::factory::CombinedError;
 
 /// An enum to represent various possible run-time errors that may occur.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug)]
 pub enum Error {
     /// An error happened when creating a gfx texture.
     Texture(CombinedError),
-    /// An error happened with the FreeType library.
-    Freetype(ft::error::Error)
+    /// An io error happened when reading font files.
+    IoError(io::Error),
 }
 
 impl From<CombinedError> for Error {
@@ -25,16 +25,16 @@ impl From<CombinedError> for Error {
     }
 }
 
-impl From<ft::error::Error> for Error {
-    fn from(ft_err: ft::error::Error) -> Self {
-        Error::Freetype(ft_err)
+impl From<io::Error> for Error {
+    fn from(io_error: io::Error) -> Self {
+        Error::IoError(io_error)
     }
 }
 
-/// A struct used for caching rendered font.
+/// A struct used for caching a rendered font.
 pub struct GlyphCache<R, F> where R: gfx::Resources {
-    /// The font face.
-    pub face: ft::Face<'static>,
+    /// The font.
+    pub font: rt::Font<'static>,
     factory: F,
     // Maps from fontsize and character to offset, size and texture.
     data: HashMap<(FontSize, char), ([Scalar; 2], [Scalar; 2], Texture<R>)>
@@ -42,13 +42,21 @@ pub struct GlyphCache<R, F> where R: gfx::Resources {
 
 impl<R, F> GlyphCache<R, F> where R: gfx::Resources {
      /// Constructor for a GlyphCache.
-    pub fn new<P>(font: P, factory: F) -> Result<Self, Error>
-        where P: AsRef<Path>
-    {
-        let freetype = try!(ft::Library::init());
-        let face = try!(freetype.new_face(font.as_ref(), 0));
+    pub fn new<P>(font_path: P, factory: F) -> Result<Self, Error>
+        where P: AsRef<Path>    {
+        
+        use std::io::Read;
+        use std::fs::File;
+        
+        let mut file = try!(File::open(font_path));
+        let mut file_buffer = Vec::new();
+        try!(file.read_to_end(&mut file_buffer));
+        
+        let collection = rt::FontCollection::from_bytes(file_buffer);
+        let font = collection.into_font().unwrap(); // only succeeds if collection consists of one font
+
         Ok(GlyphCache {
-            face: face,
+            font: font,
             factory: factory,
             data: HashMap::new(),
         })
@@ -77,31 +85,41 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
                 }
             }
             Entry::Vacant(v) => {
-                self.face.set_pixel_sizes(0, size).unwrap();
-                self.face.load_char(ch as usize, ft::face::DEFAULT).unwrap();
-                let glyph = self.face.glyph().get_glyph().unwrap();
-                let bitmap_glyph = glyph.to_bitmap(RenderMode::Normal, None).unwrap();
-                let glyph_size = [glyph.advance_x(), glyph.advance_y()];
+                let glyph = self.font.glyph(ch).unwrap();
+                let glyph = glyph.scaled(rt::Scale::uniform(size as f32));
+                let h_metrics = glyph.h_metrics();
+                let bounding_box = glyph.exact_bounding_box().unwrap_or(rt::Rect{min: rt::Point{x: 0.0, y: 0.0}, max: rt::Point{x: 0.0, y: 0.0} });
+                let glyph = glyph.positioned(rt::point(0.0, 0.0));
+                let pixel_bounding_box = glyph.pixel_bounding_box().unwrap_or(rt::Rect{min: rt::Point{x: 0, y: 0}, max: rt::Point{x: 0, y: 0} });
+                let pixel_bb_width = pixel_bounding_box.width();
+                let pixel_bb_height = pixel_bounding_box.height();
+
+                let mut image_buffer = Vec::<u8>::new();
+                image_buffer.resize((pixel_bb_width * pixel_bb_height) as usize, 0);
+                glyph.draw(|x, y, v| {
+                   let pos = (x + y * (pixel_bb_width as u32)) as usize;
+                   image_buffer[pos] = (255.0 * v) as u8;
+                });
+                
                 let &mut (offset, size, ref texture) = v.insert((
                     [
-                        bitmap_glyph.left() as f64,
-                        bitmap_glyph.top() as f64
+                        bounding_box.min.x as Scalar,
+                        -pixel_bounding_box.min.y as Scalar,
                     ],
                     [
-                        (glyph_size[0] >> 16) as f64,
-                        (glyph_size[1] >> 16) as f64
+                        h_metrics.advance_width as Scalar,
+                        0 as Scalar,
                     ],
                     {
-                        let bitmap = bitmap_glyph.bitmap();
-                        if bitmap.width() == 0 || bitmap.rows() == 0 {
+                        if pixel_bb_width == 0 || pixel_bb_height == 0 {
                             Texture::empty(&mut self.factory)
                                     .unwrap()
                         } else {
                             Texture::from_memory_alpha(
                                 &mut self.factory,
-                                bitmap.buffer(),
-                                bitmap.width() as u32,
-                                bitmap.rows() as u32,
+                                &image_buffer,
+                                pixel_bb_width as u32,
+                                pixel_bb_height as u32,
                                 &TextureSettings::new()
                             ).unwrap()
                         }

@@ -17,7 +17,7 @@ name = "gfx_graphics"
 
 
 [dependencies]
-freetype-rs = "0.6.0"
+rusttype = "0.2.0"
 gfx = "0.10.1"
 piston-shaders_graphics2d = "0.2.0"
 piston-gfx_texture = "0.12.0"
