@@ -74,6 +74,8 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
         size: FontSize,
         ch: char
     ) -> Character<'a, Self::Texture> {
+        let size = ((size as f32) * 1.333).round() as u32 ; // convert points to pixels
+        
         match self.data.entry((size, ch)) {
             //returning `into_mut()' to get reference with 'a lifetime
             Entry::Occupied(v) => {
