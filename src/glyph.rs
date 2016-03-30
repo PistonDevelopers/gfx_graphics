@@ -87,7 +87,9 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
                 }
             }
             Entry::Vacant(v) => {
-                let glyph = self.font.glyph(ch).unwrap();
+                // fallback to glyph zero or U+FFFD if glyph is not present
+                let glyph = self.font.glyph(ch).unwrap_or(self.font.glyph(rt::Codepoint(0)).unwrap_or(self.font.glyph('\u{FFFD}').unwrap()));
+
                 let glyph = glyph.scaled(rt::Scale::uniform(size as f32));
                 let h_metrics = glyph.h_metrics();
                 let bounding_box = glyph.exact_bounding_box().unwrap_or(rt::Rect{min: rt::Point{x: 0.0, y: 0.0}, max: rt::Point{x: 0.0, y: 0.0} });
