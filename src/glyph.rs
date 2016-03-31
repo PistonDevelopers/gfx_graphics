@@ -87,10 +87,15 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
                 }
             }
             Entry::Vacant(v) => {
-                // fallback to glyph zero or U+FFFD if glyph is not present
-                let glyph = self.font.glyph(ch).unwrap_or(self.font.glyph(rt::Codepoint(0)).unwrap_or(self.font.glyph('\u{FFFD}').unwrap()));
+                let glyph = self.font.glyph(ch).unwrap(); // this is only None for invalid GlyphIds, but char is converted to a Codepoint which must result in a glyph.
+                let scale = rt::Scale::uniform(size as f32); 
+                let mut glyph = glyph.scaled(scale);
+                
+                // some fonts do not contain glyph zero as fallback, instead try U+FFFD.
+                if glyph.id() == rt::GlyphId(0) && glyph.shape().is_none() {
+                    glyph = self.font.glyph('\u{FFFD}').unwrap().scaled(scale);
+                }
 
-                let glyph = glyph.scaled(rt::Scale::uniform(size as f32));
                 let h_metrics = glyph.h_metrics();
                 let bounding_box = glyph.exact_bounding_box().unwrap_or(rt::Rect{min: rt::Point{x: 0.0, y: 0.0}, max: rt::Point{x: 0.0, y: 0.0} });
                 let glyph = glyph.positioned(rt::point(0.0, 0.0));
