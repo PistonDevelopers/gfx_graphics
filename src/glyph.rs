@@ -17,6 +17,8 @@ pub enum Error {
     Texture(CombinedError),
     /// An io error happened when reading font files.
     IoError(io::Error),
+    /// No font was found in the file.
+    NoFont,
 }
 
 impl From<CombinedError> for Error {
@@ -53,7 +55,10 @@ impl<R, F> GlyphCache<R, F> where R: gfx::Resources {
         try!(file.read_to_end(&mut file_buffer));
         
         let collection = rt::FontCollection::from_bytes(file_buffer);
-        let font = collection.into_font().unwrap(); // only succeeds if collection consists of one font
+        let font = match collection.into_font() {
+            Some(font) => font,
+            None => return Err(Error::NoFont),
+        };
 
         Ok(GlyphCache {
             font: font,
