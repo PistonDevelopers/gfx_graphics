@@ -299,16 +299,16 @@ impl<R: gfx::Resources> Gfx2d<R> {
     }
 
     /// Renders graphics to a Gfx renderer.
-    pub fn draw<C, F>(
+    pub fn draw<C, F, U>(
         &mut self,
         encoder: &mut gfx::Encoder<R, C>,
         output_color: &gfx::handle::RenderTargetView<R, Srgba8>,
         output_stencil: &gfx::handle::DepthStencilView<R, DepthStencil>,
         viewport: Viewport,
         f: F
-    )
+    ) -> U
         where C: gfx::CommandBuffer<R>,
-              F: FnOnce(Context, &mut GfxGraphics<R, C>)
+              F: FnOnce(Context, &mut GfxGraphics<R, C>) -> U
     {
         let ref mut g = GfxGraphics::new(
             encoder,
@@ -317,10 +317,11 @@ impl<R: gfx::Resources> Gfx2d<R> {
             self
         );
         let c = Context::new_viewport(viewport);
-        f(c, g);
+        let res = f(c, g);
         if g.g2d.colored_offset > 0 {
             g.flush_colored();
         }
+        res
     }
 }
 
