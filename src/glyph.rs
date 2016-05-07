@@ -8,7 +8,7 @@ use std::collections::hash_map::{ HashMap, Entry };
 use graphics::character::{ CharacterCache, Character };
 use graphics::types::{FontSize, Scalar};
 use { gfx, Texture, TextureSettings };
-use gfx::core::factory::CombinedError;
+use gfx::CombinedError;
 
 /// An enum to represent various possible run-time errors that may occur.
 #[derive(Debug)]
@@ -46,14 +46,14 @@ impl<R, F> GlyphCache<R, F> where R: gfx::Resources {
      /// Constructor for a GlyphCache.
     pub fn new<P>(font_path: P, factory: F) -> Result<Self, Error>
         where P: AsRef<Path>    {
-        
+
         use std::io::Read;
         use std::fs::File;
-        
+
         let mut file = try!(File::open(font_path));
         let mut file_buffer = Vec::new();
         try!(file.read_to_end(&mut file_buffer));
-        
+
         let collection = rt::FontCollection::from_bytes(file_buffer);
         let font = match collection.into_font() {
             Some(font) => font,
@@ -80,7 +80,7 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
         ch: char
     ) -> Character<'a, Self::Texture> {
         let size = ((size as f32) * 1.333).round() as u32 ; // convert points to pixels
-        
+
         match self.data.entry((size, ch)) {
             //returning `into_mut()' to get reference with 'a lifetime
             Entry::Occupied(v) => {
@@ -93,9 +93,9 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
             }
             Entry::Vacant(v) => {
                 let glyph = self.font.glyph(ch).unwrap(); // this is only None for invalid GlyphIds, but char is converted to a Codepoint which must result in a glyph.
-                let scale = rt::Scale::uniform(size as f32); 
+                let scale = rt::Scale::uniform(size as f32);
                 let mut glyph = glyph.scaled(scale);
-                
+
                 // some fonts do not contain glyph zero as fallback, instead try U+FFFD.
                 if glyph.id() == rt::GlyphId(0) && glyph.shape().is_none() {
                     glyph = self.font.glyph('\u{FFFD}').unwrap().scaled(scale);
@@ -114,7 +114,7 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
                    let pos = (x + y * (pixel_bb_width as u32)) as usize;
                    image_buffer[pos] = (255.0 * v) as u8;
                 });
-                
+
                 let &mut (offset, size, ref texture) = v.insert((
                     [
                         bounding_box.min.x as Scalar,

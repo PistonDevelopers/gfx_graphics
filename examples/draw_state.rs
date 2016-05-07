@@ -4,10 +4,11 @@ extern crate graphics;
 extern crate gfx_graphics;
 extern crate find_folder;
 extern crate gfx;
+extern crate gfx_core;
 extern crate gfx_device_gl;
 
 use gfx::traits::*;
-use gfx::core::factory::Typed;
+use gfx_core::factory::Typed;
 use gfx::format::{DepthStencil, Formatted, Srgba8};
 use glutin_window::{GlutinWindow, OpenGL};
 use piston::window::{OpenGLWindow, Window, WindowSettings};
@@ -35,7 +36,7 @@ fn main() {
 
     let (mut device, mut factory) = gfx_device_gl::create(|s|
         window.get_proc_address(s) as *const std::os::raw::c_void);
-        
+
     // Create the main color/depth targets.
     let draw_size = window.draw_size();
     let aa = samples as gfx::tex::NumSamples;
