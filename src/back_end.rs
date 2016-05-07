@@ -215,7 +215,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             factory.create_pipeline_from_program(
                 &colored_program,
                 Primitive::TriangleList,
-                Rasterizer::new_fill(gfx::state::CullFace::Nothing),
+                Rasterizer::new_fill(),
                 pipe_colored::Init {
                     pos: (),
                     color: (),
@@ -248,7 +248,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             factory.create_pipeline_from_program(
                 &textured_program,
                 Primitive::TriangleList,
-                Rasterizer::new_fill(gfx::state::CullFace::Nothing),
+                Rasterizer::new_fill(),
                 pipe_textured::Init {
                     pos: (),
                     uv: (),
@@ -366,7 +366,7 @@ impl<'a, R, C> GfxGraphics<'a, R, C>
     }
 
     fn flush_colored(&mut self) {
-        use gfx::core::target::Rect;
+        use draw_state::target::Rect;
         use std::u16;
 
         let &mut GfxGraphics {
@@ -410,7 +410,8 @@ impl<'a, R, C> GfxGraphics<'a, R, C>
             instances: None,
             start: 0,
             end: *colored_offset as u32,
-            kind: gfx::SliceKind::Vertex
+            buffer: gfx::IndexBuffer::Auto,
+            base_vertex: 0,
         };
         encoder.draw(&slice, pso_colored, &data);
         *colored_offset = 0;
@@ -514,7 +515,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
     )
         where F: FnMut(&mut FnMut(&[f32], &[f32]))
     {
-        use gfx::core::target::Rect;
+        use draw_state::target::Rect;
         use std::u16;
 
         let color = gamma_srgb_to_linear(*color);
@@ -589,7 +590,8 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 instances: None,
                 start: 0,
                 end: n as u32,
-                kind: gfx::SliceKind::Vertex
+                buffer: gfx::IndexBuffer::Auto,
+                base_vertex: 0,
             };
             encoder.draw(&slice, pso_textured, &data);
         })

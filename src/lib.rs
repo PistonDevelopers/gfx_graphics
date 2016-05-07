@@ -9,7 +9,7 @@
 //! ### How to use gfx_graphics
 //!
 //! If you are using the [piston_window](https://github.com/pistondevelopers/piston_window)
-//! library, a `Gfx2d` object is created for you.  
+//! library, a `Gfx2d` object is created for you.
 //! All you need to do is call `e.draw_2d(|c, g| { ... });`
 //!
 //! If you are not using a window wrapper, you need to create `Gfx2d` and `GfxGraphics`.
@@ -50,6 +50,7 @@
 
 #[macro_use]
 extern crate gfx;
+extern crate draw_state;
 extern crate gfx_texture;
 extern crate graphics;
 extern crate shaders_graphics2d as shaders;
