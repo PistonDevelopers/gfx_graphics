@@ -335,7 +335,9 @@ pub struct GfxGraphics<'a, R, C>
           R::Texture: 'a,
           R::Sampler: 'a
 {
-    encoder: &'a mut gfx::Encoder<R, C>,
+    /// Provide access to the `gfx::Encoder` in case a user needs to update textures for caching,
+    /// etc.
+    pub encoder: &'a mut gfx::Encoder<R, C>,
     output_color: &'a gfx::handle::RenderTargetView<R, Srgba8>,
     output_stencil: &'a gfx::handle::DepthStencilView<R, DepthStencil>,
     g2d: &'a mut Gfx2d<R>,
