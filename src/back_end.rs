@@ -180,7 +180,6 @@ pub struct Gfx2d<R: gfx::Resources> {
     buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
     colored: PsoStencil<PipelineState<R, pipe_colored::Meta>>,
     textured: PsoStencil<PipelineState<R, pipe_textured::Meta>>,
-    sampler: gfx::handle::Sampler<R>,
 }
 
 impl<R: gfx::Resources> Gfx2d<R> {
@@ -280,12 +279,6 @@ impl<R: gfx::Resources> Gfx2d<R> {
             gfx::Bind::empty()
         ).expect("Could not create `buffer_uv`");
 
-        let sampler_info = gfx::tex::SamplerInfo::new(
-            gfx::tex::FilterMethod::Bilinear,
-            gfx::tex::WrapMode::Clamp
-        );
-        let sampler = factory.create_sampler(sampler_info);
-
         Gfx2d {
             colored_offset: 0,
             colored_draw_state: Default::default(),
@@ -294,7 +287,6 @@ impl<R: gfx::Resources> Gfx2d<R> {
             buffer_uv: buffer_uv,
             colored: colored,
             textured: textured,
-            sampler: sampler
         }
     }
 
@@ -532,7 +524,6 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 ref mut buffer_pos,
                 ref mut buffer_uv,
                 ref mut textured,
-                ref sampler,
                 ..
             },
             ..
@@ -553,7 +544,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             pos: buffer_pos.clone(),
             uv: buffer_uv.clone(),
             color: color,
-            texture: (texture.view.clone(), sampler.clone()),
+            texture: (texture.view.clone(), texture.sampler.clone()),
             blend_target: output_color.clone(),
             stencil_target: (output_stencil.clone(),
                              (stencil_val, stencil_val)),
