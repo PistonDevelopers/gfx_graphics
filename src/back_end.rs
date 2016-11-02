@@ -28,23 +28,23 @@ gfx_vertex_struct!( TexCoordsFormat {
 });
 
 gfx_pipeline_base!( pipe_colored {
-    pos: gfx::VertexBuffer<PositionFormat>,
-    color: gfx::VertexBuffer<ColorFormat>,
-    blend_target: gfx::BlendTarget<gfx::format::Srgba8>,
-    stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
-    blend_ref: gfx::BlendRef,
-    scissor: gfx::Scissor,
+    pos: ::gfx::VertexBuffer<PositionFormat>,
+    color: ::gfx::VertexBuffer<ColorFormat>,
+    blend_target: ::gfx::BlendTarget<::gfx::format::Srgba8>,
+    stencil_target: ::gfx::StencilTarget<::gfx::format::DepthStencil>,
+    blend_ref: ::gfx::BlendRef,
+    scissor: ::gfx::Scissor,
 });
 
 gfx_pipeline_base!( pipe_textured {
-    pos: gfx::VertexBuffer<PositionFormat>,
-    uv: gfx::VertexBuffer<TexCoordsFormat>,
-    color: gfx::Global<[f32; 4]>,
-    texture: gfx::TextureSampler<[f32; 4]>,
-    blend_target: gfx::BlendTarget<gfx::format::Srgba8>,
-    stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
-    blend_ref: gfx::BlendRef,
-    scissor: gfx::Scissor,
+    pos: ::gfx::VertexBuffer<PositionFormat>,
+    uv: ::gfx::VertexBuffer<TexCoordsFormat>,
+    color: ::gfx::Global<[f32; 4]>,
+    texture: ::gfx::TextureSampler<[f32; 4]>,
+    blend_target: ::gfx::BlendTarget<::gfx::format::Srgba8>,
+    stencil_target: ::gfx::StencilTarget<::gfx::format::DepthStencil>,
+    blend_ref: ::gfx::BlendRef,
+    scissor: ::gfx::Scissor,
 });
 
 // Stores one PSO per blend setting.
