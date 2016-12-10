@@ -1,8 +1,10 @@
+extern crate gfx;
+
 use graphics::{ Context, DrawState, Graphics, Viewport };
 use graphics::BACK_END_MAX_VERTEX_COUNT as BUFFER_SIZE;
 use graphics::draw_state;
 use graphics::color::gamma_srgb_to_linear;
-use { gfx, Texture };
+use Texture;
 use gfx::format::{DepthStencil, Srgba8};
 use gfx::pso::PipelineState;
 use shader_version::{ OpenGL, Shaders };
