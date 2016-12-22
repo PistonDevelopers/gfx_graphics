@@ -4,12 +4,11 @@ extern crate graphics;
 extern crate gfx_graphics;
 extern crate find_folder;
 extern crate gfx;
-extern crate gfx_core;
 extern crate gfx_device_gl;
 
 use gfx::traits::*;
-use gfx_core::factory::Typed;
 use gfx::format::{DepthStencil, Formatted, Srgba8};
+use gfx::memory::Typed;
 use glutin_window::{GlutinWindow, OpenGL};
 use piston::window::{OpenGLWindow, Window, WindowSettings};
 use piston::event_loop::Events;
@@ -39,7 +38,7 @@ fn main() {
 
     // Create the main color/depth targets.
     let draw_size = window.draw_size();
-    let aa = samples as gfx::tex::NumSamples;
+    let aa = samples as gfx::texture::NumSamples;
     let dim = (draw_size.width as u16, draw_size.height as u16, 1, aa.into());
     let color_format = <Srgba8 as Formatted>::get_format();
     let depth_format = <DepthStencil as Formatted>::get_format();

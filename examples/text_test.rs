@@ -7,7 +7,7 @@ extern crate glutin_window;
 
 use glutin_window::{GlutinWindow, OpenGL};
 use gfx::traits::*;
-use gfx::Typed;
+use gfx::memory::Typed;
 use gfx::format::{DepthStencil, Formatted, Srgba8};
 use std::path::Path;
 use piston::window::{OpenGLWindow, Window, WindowSettings, Size};
@@ -36,7 +36,7 @@ fn main() {
 
     // Create the main color/depth targets.
     let draw_size = window.draw_size();
-    let aa = samples as gfx::tex::NumSamples;
+    let aa = samples as gfx::texture::NumSamples;
     let dim = (draw_size.width as u16, draw_size.height as u16, 1, aa.into());
     let color_format = <Srgba8 as Formatted>::get_format();
     let depth_format = <DepthStencil as Formatted>::get_format();
