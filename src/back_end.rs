@@ -17,36 +17,38 @@ const UV_COMPONENTS: usize = 2;
 // `4` for bytes per f32, and `2 + 4` for position and color.
 const CHUNKS: usize = 100;
 
-gfx_vertex_struct!( PositionFormat {
-    pos: [f32; 2] = "pos",
-});
+gfx_defines! {
+    vertex PositionFormat {
+        pos: [f32; 2] = "pos",
+    }
 
-gfx_vertex_struct!( ColorFormat {
-    color: [f32; 4] = "color",
-});
+    vertex ColorFormat {
+        color: [f32; 4] = "color",
+    }
 
-gfx_vertex_struct!( TexCoordsFormat {
-    uv: [f32; 2] = "uv",
-});
+    vertex TexCoordsFormat {
+        uv: [f32; 2] = "uv",
+    }
+}
 
 gfx_pipeline_base!( pipe_colored {
-    pos: ::gfx::VertexBuffer<PositionFormat>,
-    color: ::gfx::VertexBuffer<ColorFormat>,
-    blend_target: ::gfx::BlendTarget<::gfx::format::Srgba8>,
-    stencil_target: ::gfx::StencilTarget<::gfx::format::DepthStencil>,
-    blend_ref: ::gfx::BlendRef,
-    scissor: ::gfx::Scissor,
+    pos: gfx::VertexBuffer<PositionFormat>,
+    color: gfx::VertexBuffer<ColorFormat>,
+    blend_target: gfx::BlendTarget<gfx::format::Srgba8>,
+    stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
+    blend_ref: gfx::BlendRef,
+    scissor: gfx::Scissor,
 });
 
 gfx_pipeline_base!( pipe_textured {
-    pos: ::gfx::VertexBuffer<PositionFormat>,
-    uv: ::gfx::VertexBuffer<TexCoordsFormat>,
-    color: ::gfx::Global<[f32; 4]>,
-    texture: ::gfx::TextureSampler<[f32; 4]>,
-    blend_target: ::gfx::BlendTarget<::gfx::format::Srgba8>,
-    stencil_target: ::gfx::StencilTarget<::gfx::format::DepthStencil>,
-    blend_ref: ::gfx::BlendRef,
-    scissor: ::gfx::Scissor,
+    pos: gfx::VertexBuffer<PositionFormat>,
+    uv: gfx::VertexBuffer<TexCoordsFormat>,
+    color: gfx::Global<[f32; 4]>,
+    texture: gfx::TextureSampler<[f32; 4]>,
+    blend_target: gfx::BlendTarget<gfx::format::Srgba8>,
+    stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
+    blend_ref: gfx::BlendRef,
+    scissor: gfx::Scissor,
 });
 
 // Stores one PSO per blend setting.
@@ -267,17 +269,17 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let buffer_pos = factory.create_buffer_dynamic(
             BUFFER_SIZE * CHUNKS,
-            gfx::BufferRole::Vertex,
+            gfx::buffer::Role::Vertex,
             gfx::Bind::empty()
         ).expect("Could not create `buffer_pos`");
         let buffer_color = factory.create_buffer_dynamic(
             BUFFER_SIZE * CHUNKS,
-            gfx::BufferRole::Vertex,
+            gfx::buffer::Role::Vertex,
             gfx::Bind::empty()
         ).expect("Could not create `buffer_color`");
         let buffer_uv = factory.create_buffer_dynamic(
             BUFFER_SIZE,
-            gfx::BufferRole::Vertex,
+            gfx::buffer::Role::Vertex,
             gfx::Bind::empty()
         ).expect("Could not create `buffer_uv`");
 
