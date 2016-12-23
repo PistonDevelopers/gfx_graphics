@@ -117,7 +117,7 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
 
                 let &mut (offset, size, ref texture) = v.insert((
                     [
-                        bounding_box.min.x as Scalar + 1.0,
+                        bounding_box.min.x as Scalar - 1.0,
                         -pixel_bounding_box.min.y as Scalar + 1.0,
                     ],
                     [
