@@ -43,6 +43,15 @@ pub struct GlyphCache<R, F> where R: gfx::Resources {
 }
 
 impl<R, F> GlyphCache<R, F> where R: gfx::Resources {
+    /// Constructs a GlyphCache from a Font.
+    pub fn from_font(font: rt::Font<'static>, factory: F) -> Self {
+        GlyphCache {
+            font: font,
+            factory: factory,
+            data: HashMap::new(),
+        }
+    }
+
      /// Constructor for a GlyphCache.
     pub fn new<P>(font_path: P, factory: F) -> Result<Self, Error>
         where P: AsRef<Path>    {
@@ -60,11 +69,7 @@ impl<R, F> GlyphCache<R, F> where R: gfx::Resources {
             None => return Err(Error::NoFont),
         };
 
-        Ok(GlyphCache {
-            font: font,
-            factory: factory,
-            data: HashMap::new(),
-        })
+        Ok(Self::from_font(font, factory))
     }
 }
 
