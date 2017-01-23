@@ -267,19 +267,22 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let textured = PsoStencil::new(factory, textured_pipeline);
 
-        let buffer_pos = factory.create_buffer_dynamic(
+        let buffer_pos = factory.create_buffer(
             BUFFER_SIZE * CHUNKS,
             gfx::buffer::Role::Vertex,
+            gfx::memory::Usage::Dynamic,
             gfx::Bind::empty()
         ).expect("Could not create `buffer_pos`");
-        let buffer_color = factory.create_buffer_dynamic(
+        let buffer_color = factory.create_buffer(
             BUFFER_SIZE * CHUNKS,
             gfx::buffer::Role::Vertex,
+            gfx::memory::Usage::Dynamic,
             gfx::Bind::empty()
         ).expect("Could not create `buffer_color`");
-        let buffer_uv = factory.create_buffer_dynamic(
+        let buffer_uv = factory.create_buffer(
             BUFFER_SIZE,
             gfx::buffer::Role::Vertex,
+            gfx::memory::Usage::Dynamic,
             gfx::Bind::empty()
         ).expect("Could not create `buffer_uv`");
 
