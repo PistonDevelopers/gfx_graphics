@@ -12,7 +12,7 @@ use gfx::format::{DepthStencil, Formatted, Srgba8};
 use std::path::Path;
 use piston::window::{OpenGLWindow, Window, WindowSettings, Size};
 use piston::input::{AfterRenderEvent, RenderEvent};
-use piston::event_loop::Events;
+use piston::event_loop::{Events, EventSettings, EventLoop};
 use gfx_graphics::{Gfx2d, GlyphCache};
 
 fn main() {
@@ -49,7 +49,7 @@ fn main() {
 
     let mut encoder = factory.create_command_buffer().into();
     let mut g2d = Gfx2d::new(opengl, &mut factory);
-    let mut events = window.events();
+    let mut events = Events::new(EventSettings::new().lazy(true));
 
     while let Some(e) = events.next(window) {
         if let Some(args) = e.render_args() {

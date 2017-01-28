@@ -11,7 +11,7 @@ use gfx::format::{DepthStencil, Formatted, Srgba8};
 use gfx::memory::Typed;
 use glutin_window::{GlutinWindow, OpenGL};
 use piston::window::{OpenGLWindow, Window, WindowSettings};
-use piston::event_loop::Events;
+use piston::event_loop::{Events, EventSettings, EventLoop};
 use graphics::draw_state::Blend;
 use graphics::*;
 use piston::input::*;
@@ -61,7 +61,7 @@ fn main() {
 
     let mut encoder = factory.create_command_buffer().into();
     let mut g2d = Gfx2d::new(opengl, &mut factory);
-    let mut events = window.events();
+    let mut events = Events::new(EventSettings::new().lazy(true));
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.render_args() {
             g2d.draw(&mut encoder, &output_color, &output_stencil, args.viewport(), |c, g| {
