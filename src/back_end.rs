@@ -10,8 +10,6 @@ use gfx::pso::PipelineState;
 use shader_version::{ OpenGL, Shaders };
 use shader_version::glsl::GLSL;
 
-const POS_COMPONENTS: usize = 2;
-const UV_COMPONENTS: usize = 2;
 // The number of chunks to fill up before rendering.
 // Amount of memory used: `BUFFER_SIZE * CHUNKS * 4 * (2 + 4)`
 // `4` for bytes per f32, and `2 + 4` for position and color.
@@ -455,7 +453,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         color: &[f32; 4],
         mut f: F
     )
-        where F: FnMut(&mut FnMut(&[f32]))
+        where F: FnMut(&mut FnMut(&[[f32; 2]]))
     {
         let color = gamma_srgb_to_linear(*color);
 
@@ -464,8 +462,8 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             self.flush_colored();
             self.g2d.colored_draw_state = *draw_state;
         }
-        f(&mut |vertices: &[f32]| {
-            let n = vertices.len() / POS_COMPONENTS;
+        f(&mut |vertices: &[[f32; 2]]| {
+            let n = vertices.len();
 
             // Render if there is not enough room.
             if self.g2d.colored_offset + n > BUFFER_SIZE * CHUNKS {
@@ -514,7 +512,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         texture: &<Self as Graphics>::Texture,
         mut f: F
     )
-        where F: FnMut(&mut FnMut(&[f32], &[f32]))
+        where F: FnMut(&mut FnMut(&[[f32; 2]], &[[f32; 2]]))
     {
         use draw_state::target::Rect;
         use std::u16;
@@ -559,14 +557,14 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
             scissor: scissor,
         };
 
-        f(&mut |vertices: &[f32], texture_coords: &[f32]| {
+        f(&mut |vertices: &[[f32; 2]], texture_coords: &[[f32; 2]]| {
             use std::slice::from_raw_parts;
 
             assert_eq!(
-                vertices.len() * UV_COMPONENTS,
-                texture_coords.len() * POS_COMPONENTS
+                vertices.len(),
+                texture_coords.len()
             );
-            let n = vertices.len() / POS_COMPONENTS;
+            let n = vertices.len();
             unsafe {
                 encoder.update_buffer(
                     &buffer_pos,
