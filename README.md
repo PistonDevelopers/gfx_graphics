@@ -4,6 +4,8 @@ Maintainers: @Potpourri, @kvark, @bvssvni
 
 The implementation of a piston-graphics back-end using Gfx.
 
+[API Documentation](https://docs.rs/piston2d-gfx_graphics/)
+
 ![screenshot](./screenshot.png)
 
 ### Dependency graph
