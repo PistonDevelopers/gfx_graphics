@@ -1,7 +1,7 @@
 [package]
 
 name = "piston2d-gfx_graphics"
-version = "0.39.0"
+version = "0.40.0"
 authors = ["bvssvni <bvssvni@gmail.com>"]
 keywords = ["graphics", "2d", "gfx", "piston"]
 description = "A Gfx 2D back-end for the Piston game engine"
@@ -18,10 +18,10 @@ name = "gfx_graphics"
 
 [dependencies]
 rusttype = "0.2.1"
-gfx = "0.15.1"
+gfx = "0.16.0"
 draw_state = "0.7.0"
 piston-shaders_graphics2d = "0.3.1"
-piston-gfx_texture = "0.23.0"
+piston-gfx_texture = "0.24.0"
 piston2d-graphics = "0.21.0"
 shader_version = "0.2.1"
 
