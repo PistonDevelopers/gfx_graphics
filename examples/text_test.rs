@@ -13,7 +13,7 @@ use std::path::Path;
 use piston::window::{OpenGLWindow, Window, WindowSettings, Size};
 use piston::input::{AfterRenderEvent, RenderEvent};
 use piston::event_loop::{Events, EventSettings, EventLoop};
-use gfx_graphics::{Gfx2d, GlyphCache};
+use gfx_graphics::{Gfx2d, GlyphCache, TextureSettings};
 
 fn main() {
     let opengl = OpenGL::V3_2;
@@ -31,7 +31,8 @@ fn main() {
 
     let mut glyph_cache = GlyphCache::new(
         Path::new("assets/FiraSans-Regular.ttf"),
-        factory.clone()
+        factory.clone(),
+        TextureSettings::new()
     ).unwrap();
 
     // Create the main color/depth targets.
