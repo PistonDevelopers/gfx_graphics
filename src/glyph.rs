@@ -37,6 +37,9 @@ impl From<io::Error> for Error {
 pub struct GlyphCache<R, F> where R: gfx::Resources {
     /// The font.
     pub font: rt::Font<'static>,
+    // The settings to render the font with.
+    settings: TextureSettings,
+    // The factory to create the textures with.
     factory: F,
     // Maps from fontsize and character to offset, size and texture.
     data: HashMap<(FontSize, char), ([Scalar; 2], [Scalar; 2], Texture<R>)>
@@ -44,16 +47,17 @@ pub struct GlyphCache<R, F> where R: gfx::Resources {
 
 impl<R, F> GlyphCache<R, F> where R: gfx::Resources {
     /// Constructs a GlyphCache from a Font.
-    pub fn from_font(font: rt::Font<'static>, factory: F) -> Self {
+    pub fn from_font(font: rt::Font<'static>, factory: F, settings: TextureSettings) -> Self {
         GlyphCache {
             font: font,
+            settings: settings,
             factory: factory,
             data: HashMap::new(),
         }
     }
 
      /// Constructor for a GlyphCache.
-    pub fn new<P>(font_path: P, factory: F) -> Result<Self, Error>
+    pub fn new<P>(font_path: P, factory: F, settings: TextureSettings) -> Result<Self, Error>
         where P: AsRef<Path>    {
 
         use std::io::Read;
@@ -69,7 +73,7 @@ impl<R, F> GlyphCache<R, F> where R: gfx::Resources {
             None => return Err(Error::NoFont),
         };
 
-        Ok(Self::from_font(font, factory))
+        Ok(Self::from_font(font, factory, settings))
     }
 }
 
@@ -139,7 +143,7 @@ impl<R, F> CharacterCache for GlyphCache<R, F> where
                                 &image_buffer,
                                 pixel_bb_width as u32,
                                 pixel_bb_height as u32,
-                                &TextureSettings::new()
+                                &self.settings
                             ).unwrap()
                         }
                     },
