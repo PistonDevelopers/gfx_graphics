@@ -59,8 +59,10 @@ extern crate shader_version;
 pub use gfx_texture::*;
 
 pub use back_end::{ Gfx2d, GfxGraphics };
-pub use glyph::Error as GlyphError;
-pub use glyph::GlyphCache;
+// pub use glyph::Error as GlyphError;
+// pub use glyph::GlyphCache;
+
+/// Stores textures for text rendering.
+pub type GlyphCache<'a, F, R> = graphics::glyph_cache::rusttype::GlyphCache<'a, F, Texture<R>>;
 
 mod back_end;
-mod glyph;
