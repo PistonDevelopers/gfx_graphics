@@ -64,7 +64,7 @@ fn main() {
                     &DrawState::default(),
                     c.transform.trans(10.0, 100.0),
                     g
-                );
+                ).unwrap();
             });
             encoder.flush(&mut device);
         }
