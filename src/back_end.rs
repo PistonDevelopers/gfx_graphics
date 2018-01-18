@@ -103,8 +103,8 @@ impl<T> PsoStencil<T> {
             (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
 
         // Channel color masks.
-        let mask_all = gfx::state::MASK_ALL;
-        let mask_none = gfx::state::MASK_NONE;
+        let mask_all = gfx::state::ColorMask::all();
+        let mask_none = gfx::state::ColorMask::empty();
 
         // Fake disabled blending using the same pipeline.
         let no_blend = Blend {
@@ -269,19 +269,19 @@ impl<R: gfx::Resources> Gfx2d<R> {
             BUFFER_SIZE * CHUNKS,
             gfx::buffer::Role::Vertex,
             gfx::memory::Usage::Dynamic,
-            gfx::Bind::empty()
+            gfx::memory::Bind::empty()
         ).expect("Could not create `buffer_pos`");
         let buffer_color = factory.create_buffer(
             BUFFER_SIZE * CHUNKS,
             gfx::buffer::Role::Vertex,
             gfx::memory::Usage::Dynamic,
-            gfx::Bind::empty()
+            gfx::memory::Bind::empty()
         ).expect("Could not create `buffer_color`");
         let buffer_uv = factory.create_buffer(
             BUFFER_SIZE,
             gfx::buffer::Role::Vertex,
             gfx::memory::Usage::Dynamic,
-            gfx::Bind::empty()
+            gfx::memory::Bind::empty()
         ).expect("Could not create `buffer_uv`");
 
         Gfx2d {
