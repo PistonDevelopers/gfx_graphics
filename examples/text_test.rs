@@ -10,14 +10,14 @@ use gfx::traits::*;
 use gfx::memory::Typed;
 use gfx::format::{DepthStencil, Formatted, Srgba8};
 use std::path::Path;
-use piston::window::{OpenGLWindow, Window, WindowSettings, Size};
+use piston::window::{OpenGLWindow, Window, WindowSettings};
 use piston::input::{AfterRenderEvent, RenderEvent};
 use piston::event_loop::{Events, EventSettings, EventLoop};
 use gfx_graphics::{Gfx2d, GlyphCache, TextureSettings};
 
 fn main() {
     let opengl = OpenGL::V3_2;
-    let size = Size { width: 500, height: 300 };
+    let size = [500, 300];
     let samples = 4;
     let ref mut window: GlutinWindow =
         WindowSettings::new("gfx_graphics: text_test", size)
