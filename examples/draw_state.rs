@@ -15,7 +15,7 @@ use piston::event_loop::{Events, EventSettings, EventLoop};
 use graphics::draw_state::Blend;
 use graphics::*;
 use piston::input::*;
-use gfx_graphics::{Flip, Gfx2d, Texture, TextureSettings};
+use gfx_graphics::{Flip, Gfx2d, Texture, TextureSettings, TextureContext};
 
 fn main() {
     println!("Press A to change blending");
@@ -54,7 +54,11 @@ fn main() {
     let blends = [Blend::Alpha, Blend::Add, Blend::Invert, Blend::Multiply];
     let mut blend = 0;
     let mut clip_inside = true;
-    let rust_logo = Texture::from_path(&mut factory,
+    let mut texture_context = TextureContext {
+        factory: factory.clone(),
+        encoder: factory.create_command_buffer().into(),
+    };
+    let rust_logo = Texture::from_path(&mut texture_context,
                                        assets.join("rust.png"),
                                        Flip::None,
                                        &TextureSettings::new()).unwrap();

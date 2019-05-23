@@ -63,6 +63,7 @@ pub use back_end::{ Gfx2d, GfxGraphics };
 // pub use glyph::GlyphCache;
 
 /// Stores textures for text rendering.
-pub type GlyphCache<'a, F, R> = graphics::glyph_cache::rusttype::GlyphCache<'a, F, Texture<R>>;
+pub type GlyphCache<'a, F, R, C> =
+    graphics::glyph_cache::rusttype::GlyphCache<'a, TextureContext<F, R, C>, Texture<R>>;
 
 mod back_end;

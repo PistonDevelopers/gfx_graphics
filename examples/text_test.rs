@@ -13,7 +13,7 @@ use std::path::Path;
 use piston::window::{OpenGLWindow, Window, WindowSettings};
 use piston::input::{AfterRenderEvent, RenderEvent};
 use piston::event_loop::{Events, EventSettings, EventLoop};
-use gfx_graphics::{Gfx2d, GlyphCache, TextureSettings};
+use gfx_graphics::{Gfx2d, GlyphCache, TextureSettings, TextureContext};
 
 fn main() {
     let opengl = OpenGL::V3_2;
@@ -31,7 +31,10 @@ fn main() {
 
     let mut glyph_cache = GlyphCache::new(
         Path::new("assets/FiraSans-Regular.ttf"),
-        factory.clone(),
+        TextureContext {
+            factory: factory.clone(),
+            encoder: factory.create_command_buffer().into(),
+        },
         TextureSettings::new()
     ).unwrap();
 
@@ -66,6 +69,10 @@ fn main() {
                     g
                 ).unwrap();
             });
+
+            // Update glyphs before rendering.
+            glyph_cache.factory.encoder.flush(&mut device);
+            
             encoder.flush(&mut device);
         }
 
