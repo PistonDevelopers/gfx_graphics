@@ -29,7 +29,7 @@ fn main() {
         )
         .exit_on_esc(true)
         .samples(samples)
-        .opengl(opengl)
+        .graphics_api(opengl)
         .build()
         .unwrap();
 

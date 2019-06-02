@@ -22,7 +22,7 @@ fn main() {
     let ref mut window: GlutinWindow =
         WindowSettings::new("gfx_graphics: text_test", size)
         .exit_on_esc(true)
-        .opengl(opengl)
+        .graphics_api(opengl)
         .samples(samples)
         .build().unwrap();
 
