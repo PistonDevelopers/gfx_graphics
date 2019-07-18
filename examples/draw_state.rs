@@ -51,7 +51,7 @@ fn main() {
 
     let assets = find_folder::Search::ParentsThenKids(3, 3)
         .for_folder("assets").unwrap();
-    let blends = [Blend::Alpha, Blend::Add, Blend::Invert, Blend::Multiply];
+    let blends = [Blend::Alpha, Blend::Add, Blend::Invert, Blend::Multiply, Blend::Screen];
     let mut blend = 0;
     let mut clip_inside = true;
     let mut texture_context = TextureContext {
