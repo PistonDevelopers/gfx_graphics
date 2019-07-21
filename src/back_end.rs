@@ -56,7 +56,7 @@ struct PsoBlend<T> {
     multiply: T,
     invert: T,
     none: T,
-    screen: T,
+    lighter: T,
 }
 
 impl<T> PsoBlend<T> {
@@ -68,7 +68,7 @@ impl<T> PsoBlend<T> {
             Some(Blend::Add) => &mut self.add,
             Some(Blend::Multiply) => &mut self.multiply,
             Some(Blend::Invert) => &mut self.invert,
-            Some(Blend::Screen) => &mut self.screen,
+            Some(Blend::Lighter) => &mut self.lighter,
             None => &mut self.none,
         }
     }
@@ -124,7 +124,7 @@ impl<T> PsoStencil<T> {
 
         use gfx::state::BlendValue;
 
-        const BLEND_SCREEN: Blend = Blend {
+        const BLEND_LIGHTER: Blend = Blend {
                     color: BlendChannel {
                         equation: Equation::Add,
                         source: Factor::ZeroPlus(BlendValue::SourceAlpha),
@@ -132,7 +132,7 @@ impl<T> PsoStencil<T> {
                     },
                     alpha: BlendChannel {
                         equation: Equation::Add,
-                        source: Factor::One,
+                        source: Factor::Zero,
                         destination: Factor::One,
                     },
                 };
@@ -143,7 +143,7 @@ impl<T> PsoStencil<T> {
                 add: f(factory, blend::ADD, stencil, mask_all),
                 multiply: f(factory, blend::MULTIPLY, stencil, mask_all),
                 invert: f(factory, blend::INVERT, stencil, mask_all),
-                screen: f(factory, BLEND_SCREEN, stencil, mask_all),
+                lighter: f(factory, BLEND_LIGHTER, stencil, mask_all),
                 none: f(factory, no_blend, stencil, mask_all),
             },
             clip: PsoBlend {
@@ -151,7 +151,7 @@ impl<T> PsoStencil<T> {
                 add: f(factory, blend::ADD, stencil_clip, mask_none),
                 multiply: f(factory, blend::MULTIPLY, stencil_clip, mask_none),
                 invert: f(factory, blend::INVERT, stencil_clip, mask_none),
-                screen: f(factory, BLEND_SCREEN, stencil_clip, mask_none),
+                lighter: f(factory, BLEND_LIGHTER, stencil_clip, mask_none),
                 none: f(factory, no_blend, stencil_clip, mask_none),
             },
             inside: PsoBlend {
@@ -159,7 +159,7 @@ impl<T> PsoStencil<T> {
                 add: f(factory, blend::ADD, stencil_inside, mask_all),
                 multiply: f(factory, blend::MULTIPLY, stencil_inside, mask_all),
                 invert: f(factory, blend::INVERT, stencil_inside, mask_all),
-                screen: f(factory, BLEND_SCREEN, stencil_inside, mask_all),
+                lighter: f(factory, BLEND_LIGHTER, stencil_inside, mask_all),
                 none: f(factory, no_blend, stencil_inside, mask_all),
             },
             outside: PsoBlend {
@@ -167,7 +167,7 @@ impl<T> PsoStencil<T> {
                 add: f(factory, blend::ADD, stencil_outside, mask_all),
                 multiply: f(factory, blend::MULTIPLY, stencil_outside, mask_all),
                 invert: f(factory, blend::INVERT, stencil_outside, mask_all),
-                screen: f(factory, BLEND_SCREEN, stencil_outside, mask_all),
+                lighter: f(factory, BLEND_LIGHTER, stencil_outside, mask_all),
                 none: f(factory, no_blend, stencil_outside, mask_all),
             }
         }
