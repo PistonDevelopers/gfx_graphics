@@ -24,7 +24,7 @@ piston-gfx_texture = "0.36.0"
 shader_version = "0.6.0"
 
 [dependencies.piston2d-graphics]
-version = "0.32.0"
+version = "0.33.0"
 features = ["glyph_cache_rusttype"]
 
 [dev-dependencies]
