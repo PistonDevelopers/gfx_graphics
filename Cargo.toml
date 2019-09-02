@@ -22,6 +22,7 @@ draw_state = "0.8.0"
 piston-shaders_graphics2d = "0.3.1"
 piston-gfx_texture = "0.38.0"
 shader_version = "0.6.0"
+image = "0.22.1"
 
 [dependencies.piston2d-graphics]
 version = "0.34.0"
