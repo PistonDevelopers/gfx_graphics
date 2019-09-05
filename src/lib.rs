@@ -1,4 +1,5 @@
 #![deny(missing_docs)]
+#![deny(unreachable_pub)]
 
 //! A [Piston 2D graphics](https://github.com/pistondevelopers/graphics) back-end using [gfx-rs](https://github.com/gfx-rs/gfx).
 //!
