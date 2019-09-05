@@ -20,11 +20,11 @@ name = "gfx_graphics"
 gfx = "0.17.1"
 draw_state = "0.8.0"
 piston-shaders_graphics2d = "0.3.1"
-piston-gfx_texture = "0.38.0"
+piston-gfx_texture = "0.39.0"
 shader_version = "0.6.0"
 
 [dependencies.piston2d-graphics]
-version = "0.34.0"
+version = "0.35.0"
 features = ["glyph_cache_rusttype"]
 
 [dev-dependencies]
