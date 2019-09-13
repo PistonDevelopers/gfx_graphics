@@ -474,7 +474,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         color: &[f32; 4],
         mut f: F
     )
-        where F: FnMut(&mut FnMut(&[[f32; 2]]))
+        where F: FnMut(&mut dyn FnMut(&[[f32; 2]]))
     {
         let color = gamma_srgb_to_linear(*color);
 
@@ -533,7 +533,7 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         texture: &<Self as Graphics>::Texture,
         mut f: F
     )
-        where F: FnMut(&mut FnMut(&[[f32; 2]], &[[f32; 2]]))
+        where F: FnMut(&mut dyn FnMut(&[[f32; 2]], &[[f32; 2]]))
     {
         use draw_state::target::Rect;
         use std::u16;
