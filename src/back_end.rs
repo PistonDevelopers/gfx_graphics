@@ -80,6 +80,7 @@ struct PsoStencil<T> {
     clip: PsoBlend<T>,
     inside: PsoBlend<T>,
     outside: PsoBlend<T>,
+    increment: PsoBlend<T>,
 }
 
 impl<T> PsoStencil<T> {
@@ -103,6 +104,8 @@ impl<T> PsoStencil<T> {
             (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
         let stencil_outside = Stencil::new(Comparison::NotEqual, 255,
             (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
+        let stencil_increment = Stencil::new(Comparison::Never, 0,
+            (StencilOp::IncrementClamp, StencilOp::Keep, StencilOp::Keep));
 
         // Channel color masks.
         let mask_all = gfx::state::ColorMask::all();
@@ -169,7 +172,15 @@ impl<T> PsoStencil<T> {
                 invert: f(factory, blend::INVERT, stencil_outside, mask_all),
                 lighter: f(factory, BLEND_LIGHTER, stencil_outside, mask_all),
                 none: f(factory, no_blend, stencil_outside, mask_all),
-            }
+            },
+            increment: PsoBlend {
+                alpha: f(factory, blend::ALPHA, stencil_increment, mask_all),
+                add: f(factory, blend::ADD, stencil_increment, mask_all),
+                multiply: f(factory, blend::MULTIPLY, stencil_increment, mask_all),
+                invert: f(factory, blend::INVERT, stencil_increment, mask_all),
+                lighter: f(factory, BLEND_LIGHTER, stencil_increment, mask_all),
+                none: f(factory, no_blend, stencil_increment, mask_all),
+            },
         }
     }
 
@@ -186,6 +197,7 @@ impl<T> PsoStencil<T> {
             Some(Stencil::Clip(val)) => (self.clip.blend(blend), val),
             Some(Stencil::Inside(val)) => (self.inside.blend(blend), val),
             Some(Stencil::Outside(val)) => (self.outside.blend(blend), val),
+            Some(Stencil::Increment) => (self.increment.blend(blend), 0),
         }
     }
 }
