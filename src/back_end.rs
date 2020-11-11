@@ -104,7 +104,7 @@ impl<T> PsoStencil<T> {
             (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
         let stencil_outside = Stencil::new(Comparison::NotEqual, 255,
             (StencilOp::Keep, StencilOp::Keep, StencilOp::Keep));
-        let stencil_increment = Stencil::new(Comparison::Never, 0,
+        let stencil_increment = Stencil::new(Comparison::Never, 255,
             (StencilOp::IncrementClamp, StencilOp::Keep, StencilOp::Keep));
 
         // Channel color masks.
