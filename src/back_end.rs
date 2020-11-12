@@ -49,6 +49,17 @@ gfx_pipeline_base!( pipe_textured {
     scissor: gfx::Scissor,
 });
 
+gfx_pipeline_base!( pipe_textured_color {
+    pos: gfx::VertexBuffer<PositionFormat>,
+    uv: gfx::VertexBuffer<TexCoordsFormat>,
+    color: gfx::VertexBuffer<ColorFormat>,
+    texture: gfx::TextureSampler<[f32; 4]>,
+    blend_target: gfx::BlendTarget<gfx::format::Srgba8>,
+    stencil_target: gfx::StencilTarget<gfx::format::DepthStencil>,
+    blend_ref: gfx::BlendRef,
+    scissor: gfx::Scissor,
+});
+
 // Stores one PSO per blend setting.
 struct PsoBlend<T> {
     alpha: T,
@@ -215,6 +226,7 @@ pub struct Gfx2d<R: gfx::Resources> {
     buffer_uv: gfx::handle::Buffer<R, TexCoordsFormat>,
     colored: PsoStencil<PipelineState<R, pipe_colored::Meta>>,
     textured: PsoStencil<PipelineState<R, pipe_textured::Meta>>,
+    textured_color: PsoStencil<PipelineState<R, pipe_textured_color::Meta>>,
 }
 
 impl<R: gfx::Resources> Gfx2d<R> {
@@ -226,7 +238,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
         use gfx::state::Rasterizer;
         use gfx::state::{Blend, Stencil};
         use gfx::traits::*;
-        use shaders::{ colored, textured };
+        use shaders::{ colored, textured, textured_color };
 
         let glsl = opengl.to_glsl();
 
@@ -298,6 +310,41 @@ impl<R: gfx::Resources> Gfx2d<R> {
 
         let textured = PsoStencil::new(factory, textured_pipeline);
 
+        let textured_color_program = factory.link_program(
+                Shaders::new()
+                    .set(GLSL::V1_20, textured_color::VERTEX_GLSL_120)
+                    .set(GLSL::V1_50, textured_color::VERTEX_GLSL_150_CORE)
+                    .get(glsl).unwrap(),
+                Shaders::new()
+                    .set(GLSL::V1_20, textured_color::FRAGMENT_GLSL_120)
+                    .set(GLSL::V1_50, textured_color::FRAGMENT_GLSL_150_CORE)
+                    .get(glsl).unwrap()
+            ).unwrap();
+
+        let textured_color_pipeline = |factory: &mut F,
+                                 blend_preset: Blend,
+                                 stencil: Stencil,
+                                 color_mask: gfx::state::ColorMask|
+        -> PipelineState<R, pipe_textured_color::Meta> {
+            factory.create_pipeline_from_program(
+                &textured_color_program,
+                Primitive::TriangleList,
+                Rasterizer::new_fill(),
+                pipe_textured_color::Init {
+                    pos: (),
+                    uv: (),
+                    color: (),
+                    texture: "s_texture",
+                    blend_target: ("o_Color", color_mask, blend_preset),
+                    stencil_target: stencil,
+                    blend_ref: (),
+                    scissor: (),
+                }
+            ).unwrap()
+        };
+
+        let textured_color = PsoStencil::new(factory, textured_color_pipeline);
+
         let buffer_pos = factory.create_buffer(
             BUFFER_SIZE * CHUNKS,
             gfx::buffer::Role::Vertex,
@@ -325,6 +372,7 @@ impl<R: gfx::Resources> Gfx2d<R> {
             buffer_uv: buffer_uv,
             colored: colored,
             textured: textured,
+            textured_color: textured_color,
         }
     }
 
@@ -538,6 +586,61 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
         })
     }
 
+    fn tri_list_c<F>(
+        &mut self,
+        draw_state: &DrawState,
+        mut f: F
+    )
+        where F: FnMut(&mut dyn FnMut(&[[f32; 2]], &[[f32; 4]]))
+    {
+        // Flush when draw state changes.
+        if &self.g2d.colored_draw_state != draw_state {
+            self.flush_colored();
+            self.g2d.colored_draw_state = *draw_state;
+        }
+        f(&mut |vertices: &[[f32; 2]], colors: &[[f32; 4]]| {
+            let n = vertices.len();
+
+            // Render if there is not enough room.
+            if self.g2d.colored_offset + n > BUFFER_SIZE * CHUNKS {
+                self.flush_colored();
+            }
+
+            {
+                use std::slice::from_raw_parts;
+
+                let &mut GfxGraphics {
+                    ref mut encoder,
+                    g2d: &mut Gfx2d {
+                        ref mut colored_offset,
+                        ref mut buffer_pos,
+                        ref mut buffer_color,
+                        ..
+                    },
+                    ..
+                } = self;
+
+                unsafe {
+                    encoder.update_buffer(
+                        &buffer_pos,
+                        from_raw_parts(
+                            vertices.as_ptr() as *const PositionFormat,
+                            n
+                        ),
+                        *colored_offset
+                    ).unwrap();
+                }
+
+                for (i, color) in colors.iter().enumerate() {
+                    encoder.update_buffer(&buffer_color, &[ColorFormat {
+                            color: gamma_srgb_to_linear(*color)
+                        }], *colored_offset + i).unwrap();
+                }
+                *colored_offset += n;
+            }
+        })
+    }
+
     fn tri_list_uv<F>(
         &mut self,
         draw_state: &DrawState,
@@ -625,6 +728,103 @@ impl<'a, R, C> Graphics for GfxGraphics<'a, R, C>
                 base_vertex: 0,
             };
             encoder.draw(&slice, pso_textured, &data);
+        })
+    }
+
+    fn tri_list_uv_c<F>(
+        &mut self,
+        draw_state: &DrawState,
+        texture: &<Self as Graphics>::Texture,
+        mut f: F
+    )
+        where F: FnMut(&mut dyn FnMut(&[[f32; 2]], &[[f32; 2]], &[[f32; 4]]))
+    {
+        use draw_state::target::Rect;
+        use std::u16;
+
+        if self.g2d.colored_offset > 0 {
+            self.flush_colored();
+        }
+        let &mut GfxGraphics {
+            ref mut encoder,
+            output_color,
+            output_stencil,
+            g2d: &mut Gfx2d {
+                ref mut buffer_pos,
+                ref mut buffer_uv,
+                ref mut buffer_color,
+                ref mut textured_color,
+                ..
+            },
+            ..
+        } = self;
+
+        let (pso_textured_color, stencil_val) = textured_color.stencil_blend(
+            draw_state.stencil,
+            draw_state.blend
+        );
+
+        let scissor = match draw_state.scissor {
+            None => Rect { x: 0, y: 0, w: u16::MAX, h: u16::MAX },
+            Some(r) => Rect { x: r[0] as u16, y: r[1] as u16,
+                w: r[2] as u16, h: r[3] as u16 }
+        };
+
+        let data = pipe_textured_color::Data {
+            pos: buffer_pos.clone(),
+            uv: buffer_uv.clone(),
+            color: buffer_color.clone(),
+            texture: (texture.view.clone(), texture.sampler.clone()),
+            blend_target: output_color.clone(),
+            stencil_target: (output_stencil.clone(),
+                             (stencil_val, stencil_val)),
+            blend_ref: [1.0; 4],
+            scissor: scissor,
+        };
+
+        f(&mut |vertices: &[[f32; 2]], texture_coords: &[[f32; 2]], colors: &[[f32; 4]]| {
+            use std::slice::from_raw_parts;
+
+            assert_eq!(
+                vertices.len(),
+                texture_coords.len()
+            );
+            let n = vertices.len();
+            unsafe {
+                encoder.update_buffer(
+                    &buffer_pos,
+                    from_raw_parts(
+                        vertices.as_ptr() as *const PositionFormat,
+                        n
+                    ),
+                    0
+                ).unwrap();
+                encoder.update_buffer(
+                    &buffer_uv,
+                    from_raw_parts(
+                        texture_coords.as_ptr() as *const TexCoordsFormat,
+                        n
+                    ),
+                    0
+                ).unwrap();
+                encoder.update_buffer(
+                    &buffer_color,
+                    from_raw_parts(
+                        colors.as_ptr() as *const ColorFormat,
+                        n
+                    ),
+                    0
+                ).unwrap();
+            }
+
+            let slice = gfx::Slice {
+                instances: None,
+                start: 0,
+                end: n as u32,
+                buffer: gfx::IndexBuffer::Auto,
+                base_vertex: 0,
+            };
+            encoder.draw(&slice, pso_textured_color, &data);
         })
     }
 }
