@@ -1,7 +1,7 @@
 [package]
 
 name = "piston2d-gfx_graphics"
-version = "0.72.0"
+version = "0.73.0"
 authors = ["bvssvni <bvssvni@gmail.com>"]
 keywords = ["graphics", "2d", "gfx", "piston"]
 description = "A Gfx 2D back-end for the Piston game engine"
@@ -25,12 +25,12 @@ piston-gfx_texture = "0.41.0"
 shader_version = "0.7.0"
 
 [dependencies.piston2d-graphics]
-version = "0.39.0"
+version = "0.40.0"
 features = ["glyph_cache_rusttype"]
 
 [dev-dependencies]
-pistoncore-glutin_window = "0.67.0"
-piston = "0.52.0"
+pistoncore-glutin_window = "0.68.0"
+piston = "0.53.0"
 find_folder = "0.3.0"
 gfx_device_gl = "0.16.2"
 image = "0.23.0"
