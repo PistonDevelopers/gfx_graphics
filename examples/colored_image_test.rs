@@ -37,7 +37,7 @@ fn main() {
     };
     let img = match img {
         im::DynamicImage::ImageRgba8(img) => img,
-        x => x.to_rgba(),
+        x => x.to_rgba8(),
     };
     let mut texture_context = TextureContext {
         factory: factory.clone(),
